@@ -1,4 +1,4 @@
-# Yet another Crypto-PAn implementation
+# Yet another Crypto-PAn implementation for Python
 
 ## Overview
 
@@ -13,20 +13,16 @@ This package supports both IPv4 and IPv6 anonymization.
 
 ## Usage
 
-    from yacryptopan import CryptoPAn
-
-    cp = CryptoPAn('32-char-str-for-AES-key-and-pad.')
-    cp.anonymize_text('192.0.2.1')
     >>> from yacryptopan import CryptoPAn
     >>> cp = CryptoPAn('32-char-str-for-AES-key-and-pad.')
-    >>> cp.anonymize_text('192.0.2.1')
-    '49.248.2.1'
-    >>> cp.anonymize(0xc0000201, version=4)
-    838337025
-    >>> cp.anonymize_text('2001:db8::1')
-    '51fe:fdba:60:c1c0:3:e3e1:f005:4cf'
-    >>> cp.anonymize(0x20010db8000000000000000000000001, version=6)
-    108991457246830955285829324383076025551
+    >>> cp.anonymize('192.0.2.1')
+    '192.0.125.244'
+    >>> cp.anonymize_bin(0xc0000201, version=4)
+    3221257716L
+    >>> cp.anonymize('2001:db8::1')
+    '27fe:8bc7:fee:1e:1e1f:f0fe:f0e1:83fd'
+    >>> cp.anonymize_bin(0x20010db8000000000000000000000001, version=6)
+    53161570263948813229648829710638089213L
 
 ## Code
 
