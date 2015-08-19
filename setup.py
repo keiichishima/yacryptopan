@@ -12,7 +12,7 @@ except ImportError:
     read_md = lambda f: open(f, 'r').read()
 
 setup(name='yacryptopan',
-      version='0.0.1',
+      version='0.0.2',
       description='Yet another Crypto-PAn implementation for Python',
       long_description=read_md('README.md'),
       author='Keiichi SHIMA',
