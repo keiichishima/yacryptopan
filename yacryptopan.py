@@ -19,6 +19,7 @@ import logging
 
 from array import array
 from Crypto.Cipher import AES
+from functools import reduce
 from netaddr import IPNetwork
 
 _logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ class CryptoPAn(object):
         self._gen_masks()
 
     def _gen_masks(self):
-        mask128 = 0b11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
+        mask128 = reduce (lambda x, y: (x << 1) | y, [1] * 128)
         self._masks = [0] * 129
         for l in range(129):
             self._masks[l] = mask128 >> l
