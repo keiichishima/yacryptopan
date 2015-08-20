@@ -25,37 +25,60 @@ from netaddr import IPNetwork
 _logger = logging.getLogger(__name__)
 
 class CryptoPAn(object):
+    """Anonymize IP addresses keepting prefix consitency.
+    """
     def __init__(self, key):
+        """Initialize a CryptoPAn() instance.
+
+        Args:
+            key: a 32 bytes string used for AES key and padding when
+                 performing a block cipher operation. The first 16 bytes
+                 are used for AES, and latter for padding.
+        """
         assert(len(key) == 32)
         self._cipher = AES.new(key[:16])
         self._padding = array('B')
         try:
+            # for Python3
             self._padding.frombytes(self._cipher.encrypt(key[16:]))
         except AttributeError:
+            # for Python2
             self._padding.fromstring(self._cipher.encrypt(key[16:]))
         self._padding_int = self._to_int(self._padding)
         self._gen_masks()
 
     def _gen_masks(self):
+        """Generates an array of bit masks to calculate n-bits padding data.
+        """
         mask128 = reduce (lambda x, y: (x << 1) | y, [1] * 128)
         self._masks = [0] * 129
         for l in range(129):
+            # self._masks[0] <- all 1
+            # self._masks[128] <- all 0
             self._masks[l] = mask128 >> l
 
-    def _to_array(self, value, value_len):
-        addr_array = array('B')
-        for i in range(value_len):
-            addr_array.insert(0, (value >> (i * 8)) & 0xff)
-        return addr_array
+    def _to_array(self, int_value, int_value_len):
+        """Convert an int value to a byte array.
+        """
+        byte_array = array('B')
+        for i in range(int_value_len):
+            byte_array.insert(0, (int_value >> (i * 8)) & 0xff)
+        return byte_array
 
-    def _to_int(self, value_array):
-        value_len = len(value_array)
-        addr_int = 0
-        for i in range(value_len):
-            addr_int = addr_int | value_array[i] << 8 * (value_len - i - 1)
-        return addr_int
+    def _to_int(self, byte_array):
+        """Convert a byte array to an int value.
+        """
+        return reduce(lambda x, y: (x << 8) | y, byte_array)
 
     def anonymize(self, addr):
+        """Anonymize an IP address represented as a text string.
+
+        Args:
+            addr: an IP address string.
+
+        Returns:
+            An anoymized IP address string.
+        """
         ip = IPNetwork(addr)
         aaddr = self.anonymize_bin(ip.value, ip.version)
         if ip.version == 4:
@@ -72,6 +95,14 @@ class CryptoPAn(object):
                                                 aaddr & 0xffff)
 
     def anonymize_bin(self, addr, version):
+        """Anonymize an IP address represented as an integer value.
+
+        Args:
+            addr: an IP address value.
+
+        Returns:
+            An anoymized IP address value.
+        """
         if version == 4:
             pos_max = 32
             ext_addr = addr << 96
@@ -79,24 +110,25 @@ class CryptoPAn(object):
             pos_max = 128
             ext_addr = addr
 
-        result = 0
-        for pos in range(0, pos_max):
+        flip_array = []
+        for pos in range(pos_max):
             prefix = ext_addr >> (128 - pos) << (128 - pos)
             prefix = prefix | (self._padding_int & self._masks[pos])
             try:
+                # for Python3
                 f = self._cipher.encrypt(self._to_array(prefix, 16).tobytes())
             except AttributeError:
+                # for Python2
                 f = self._cipher.encrypt(self._to_array(prefix, 16).tostring())
-            flip = bytearray(f)[0] >> 7
-            result = result | (flip << 127 - pos)
+            flip_array.append(bytearray(f)[0] >> 7)
+        result = reduce(lambda x, y: (x << 1) | y, flip_array)
 
-        if version == 4:
-            return addr ^ (result >> 96)
-        else:
-            return addr ^ result
+        return addr ^ result
 
 if __name__ == '__main__':
     # do the same test as the pycryptopan does.
-    cp = CryptoPAn(''.join([chr(x) for x in range(0,32)]))
+    cp = CryptoPAn(''.join([chr(x) for x in range(0, 32)]))
+    # should print 2.90.93.17
     print (cp.anonymize('192.0.2.1'))
+    # should pring dd92:2c44:3fc0:ff1e:7ff9:c7f0:8180:7e00
     print (cp.anonymize('2001:db8::1'))
