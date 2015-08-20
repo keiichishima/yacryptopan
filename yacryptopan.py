@@ -1,7 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Yet another implementaion of Crypto-PAn based on the paper[Xu2002].
+"""Yet another implementaion of Crypto-PAn.
+
+This package provides a function to anonymize IP addresses keeping
+their prefix consistency.  This program is based on the paper
+"Prefix-Preserving IP Address Anonymization: Measurement-based
+Security Evaluation and a New Cryptography-based Scheme" written by
+Jun Xu, Jinliang Fan, Mostafa H. Ammar, and Sue B. Moon.  The detailed
+explanation can be found in [Xu2002].
+
+This package supports both IPv4 and IPv6 anonymization.
 
 [Xu2002] Jun Xu, Jinliang Fan, Mostafa H. Ammar, and Sue B. Moon,
 "Prefix-Preserving IP Address Anonymization: Measurement-based
@@ -33,7 +42,7 @@ class CryptoPAn(object):
         Args:
             key: a 32 bytes string used for AES key and padding when
                  performing a block cipher operation. The first 16 bytes
-                 are used for AES, and latter for padding.
+                 are used for the AES key, and the latter for padding.
         """
         assert(len(key) == 32)
         self._cipher = AES.new(key[:16])
@@ -51,10 +60,10 @@ class CryptoPAn(object):
         """Generates an array of bit masks to calculate n-bits padding data.
         """
         mask128 = reduce (lambda x, y: (x << 1) | y, [1] * 128)
-        self._masks = [0] * 129
-        for l in range(129):
-            # self._masks[0] <- all 1
-            # self._masks[128] <- all 0
+        self._masks = [0] * 128
+        for l in range(128):
+            # self._masks[0]   <- 128bits all 1
+            # self._masks[127] <- 1
             self._masks[l] = mask128 >> l
 
     def _to_array(self, int_value, int_value_len):
@@ -99,10 +108,12 @@ class CryptoPAn(object):
 
         Args:
             addr: an IP address value.
+            version: the version of the address (either 4 or 6)
 
         Returns:
             An anoymized IP address value.
         """
+        assert(version == 4 or version == 6)
         if version == 4:
             pos_max = 32
             ext_addr = addr << 96
@@ -113,13 +124,13 @@ class CryptoPAn(object):
         flip_array = []
         for pos in range(pos_max):
             prefix = ext_addr >> (128 - pos) << (128 - pos)
-            prefix = prefix | (self._padding_int & self._masks[pos])
+            padded_addr = prefix | (self._padding_int & self._masks[pos])
             try:
                 # for Python3
-                f = self._cipher.encrypt(self._to_array(prefix, 16).tobytes())
+                f = self._cipher.encrypt(self._to_array(padded_addr, 16).tobytes())
             except AttributeError:
                 # for Python2
-                f = self._cipher.encrypt(self._to_array(prefix, 16).tostring())
+                f = self._cipher.encrypt(self._to_array(padded_addr, 16).tostring())
             flip_array.append(bytearray(f)[0] >> 7)
         result = reduce(lambda x, y: (x << 1) | y, flip_array)
 
