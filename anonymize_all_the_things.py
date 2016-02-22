@@ -12,6 +12,9 @@ key = Random.new().read(32)
 printStdErr("using key `%s'." % hexlify(key))
 printStdErr("save the key and hard-code it in this file to get reproducible results.")
 
+
+#this key triggers errors in my test data (mapping sth to special-purpose ranges):
+# 2001b69af7e2751288b44eeb5871f175530e58f29e2f02b113f9570174816746
        
 
 cp = IPAddressCrypt(key)
