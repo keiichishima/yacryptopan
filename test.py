@@ -166,12 +166,37 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             raws.append(raw_ip6)
             anons.append(cp_ip6)
         
-        print(raws[:3])
-        
         self.prefix_preserving(raws, prefix_offset=96)
         self.prefix_preserving(anons, prefix_offset=96)
         
+    def test_ipv6_prefix_preserving(self):
+        """the same as test_ipv6_prefix_preserving_least_significant_random
+        but shift the ipv4 addresses to higher positions. 
+        For each ip, fill the lower bits with random.
+        May take some time to complete."""
+        cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
         
+        for i in range(96):
+            prefix = (random.randint(0, (2**(96-i)) - 1)) << (32+i)
+            
+            def to_ip6(ip):
+                ip = int(netaddr.IPAddress(ip, version=4))
+                ip = netaddr.IPAddress(prefix + (ip<<i) + random.randint(0, (2**i) - 1), version=6)
+                return ip.format(netaddr.ipv6_verbose)
+                
+            raws = []
+            anons = []
+            
+            for (raw, _) in self.testvector:
+                raw_ip6 = to_ip6(raw)
+                # the verbose ipv6 string is 39 chars long
+                assert len(raw_ip6) == 39
+                cp_ip6 = cp.anonymize(raw_ip6)
+                raws.append(raw_ip6)
+                anons.append(cp_ip6)
+            
+            self.prefix_preserving(raws, prefix_offset=96-i)
+            self.prefix_preserving(anons, prefix_offset=96-i)
             
         
         
