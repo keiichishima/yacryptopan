@@ -169,12 +169,14 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         self.prefix_preserving(raws, prefix_offset=96)
         self.prefix_preserving(anons, prefix_offset=96)
         
-    def no_test_ipv6_prefix_preserving(self):
+    def test_ipv6_prefix_preserving(self):
         """the same as test_ipv6_prefix_preserving_least_significant_random
         but shift the ipv4 addresses to higher positions. 
         For each ip, fill the lower bits with random.
         May take some time to complete."""
         cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
+        
+        print("This test may take some time to complete.")
         
         for i in range(96):
             prefix = (random.randint(0, (2**(96-i)) - 1)) << (32+i)
@@ -239,11 +241,13 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         self.assertGreaterEqual(dist, 44)
         self.assertLessEqual(dist, 84)
         
+        
+        print("Running 10000 test, this may take some time, ...")
         avg_dist = 0
         
         # check this several times
         # NOTE: this is a random test, it may occasionally fail
-        for _ in range(100):
+        for _ in range(10000):
             rnd = random.randint(0, (2**127) - 1)
             ip1 = netaddr.IPAddress(rnd)
             ip2 = netaddr.IPAddress((1 << 127) + rnd)
@@ -252,15 +256,16 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             
             # encrypted: hamming distance high!
             dist = hamming_distance(cp.anonymize(ip1), cp.anonymize(ip2))
-            self.assertGreaterEqual(dist, 34)
-            self.assertLessEqual(dist, 94)
+            self.assertGreaterEqual(dist, 14)
+            self.assertLessEqual(dist, 114)
             # greater 50 may sometimes fail. This is a random test!
             # on _average_ it should be greater 50!
             #self.assertGreater(dist, 50)
             #self.assertLess(dist, 78)
             avg_dist += dist
         
-        avg_dist = avg_dist / 100.0
+        avg_dist = avg_dist / 10000.0
+        print("Average Hamming distance %s (ideal: 64)" % (avg_dist))
         self.assertGreaterEqual(avg_dist, 54)
         self.assertLessEqual(avg_dist, 74)
         
