@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import unittest
 import random
 from yacryptopan import CryptoPAn
+import netaddr
 
 def ip_in_subnet(ip, subnet_ip, prefix_len):
     #python2 only
@@ -25,6 +26,10 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         assert ip_in_subnet(raws[77], raws[78], 17)
         assert ip_in_subnet(raws[87], raws[88], 3)
         assert ip_in_subnet(raws[86], raws[87], 3)
+        
+    def prefix_reserving(self, raws):
+        self.prefix_preserving_static(raws)
+        self.prefix_preserving_dynamic(raws)
     
     
     def prefix_preserving_dynamic(self, raws):
@@ -82,6 +87,55 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             self.assertEqual(cp.anonymize(raw), anon)
         print("sucessfully checked the %d IPv4s of the reference implementation" % len(self.testvector))
 
+
+    def test_ipv6_prefix_preserving_prepend(self):
+        """The test vector of the reference implementation is hacky-transformed
+        to IPv6 addresses. The most significant bits of the IPv6 address are
+        simply set to the 32 bit of the IPv4 address. We check that after 
+        anonymizing, the thing is still prefix-preserving."""
+        def to_ip6(ip):
+            ip = int(netaddr.IPAddress(ip, version=4))
+            ip = netaddr.IPAddress(ip << 96, version=6)
+            return ip.format(netaddr.ipv6_verbose)
+            
+        cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
+        
+        raws = []
+        anons = []
+        
+        for (raw, _) in self.testvector:
+            raw_ip6 = to_ip6(raw)
+            # the verbose ipv6 string is 39 chars long
+            assert len(raw_ip6) == 39
+            cp_ip6 = cp.anonymize(raw_ip6)
+            raws.append(raw_ip6)
+            anons.append(cp_ip6)
+        
+        self.prefix_reserving(raws)
+        self.prefix_reserving(anons)
+        
+        # will we get the expected reult back if we convert back to ipv4?
+        
+        def from_ip6(ip):
+            ip = netaddr.IPAddress(ip, version=6)
+            ip = ip.format(netaddr.ipv6_verbose)[:9]
+            ip = "%s::0" % ip
+            ip = int(netaddr.IPAddress(ip, version=6))
+            ip = ip >> 96
+            ip = netaddr.IPAddress(ip, version=4)
+            return ip
+        
+        
+        #for i in range(len(self.testvector)):
+        #    anonymized = from_ip6(anons[i])
+        #    (_, expected) = self.testvector[i]
+        #    self.assertEqual(cp.anonymize(raw), expected)
+        #from_ip6(raws[0])
+        #from_ip6(anons[0])
+        
+            
+        
+        
     # further tests TODO
     # two ipv6 addresses. all zero, exect one has the highest-order bit set.
     # hamming distance 1
