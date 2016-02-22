@@ -29,8 +29,15 @@ import logging
 from array import array
 from Crypto.Cipher import AES
 from functools import reduce
-# may need to be installed. python3 has something built-in
-from netaddr import IPNetwork
+import sys
+if sys.version_info.major == 2:
+    # may need to be installed. python3 has something built-in
+    from netaddr import IPNetwork
+elif sys.version_info.major == 3:
+    print("TODO: python3 compatibility")
+else:
+    print("unkown python version")
+    sys.exit(-1)
 
 _logger = logging.getLogger(__name__)
 
