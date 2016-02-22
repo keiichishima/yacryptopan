@@ -202,11 +202,26 @@ class ReferenceImplementationIPv4(unittest.TestCase):
     
     
     def test_ipv6_hamming(self):
-        """The hamming distance between entrcypted IPv6 addresses which
+        """The hamming distance between entcrypted IPv6 addresses which
         do not share a common prefix is huge. Where huge means roughly 
         the amount of bits not in the common prefix devided by two.
         There is a chance of 50% that two perfectly randomly selected bits 
-        are equal. Consequently, about 50% should not be equal."""
+        are equal. Consequently, about 50% should not be equal.
+        
+        Example:
+        Consider the following two ipv6 addresses in binary:
+        ip1 = 10...0   # a one followed by 127 zeros
+        ip2 = 0
+        The Hamming distance of ip1 and ip2 is one: Only the most significant
+            bit is different.
+        If we encrypt ip1 and ip2, there is a chance for every bit of 50% that
+        the bit was changed. This means, per bit, 25% chance that the bit of 
+        both ip1 and ip2 was changed and 25% chance that both bits were not
+        changed. Consequently, for each bit in ip1 and ip2, a 50% chance
+        that the bits are equal after encryption (assuming perfect encryption).
+        Since IPv6 addresses are 128 bit, on average, the Hamming distance
+        of the encrypted ip1 and ip2 should be 64.
+        """
         
         #random key!
         cp = CryptoPAn(b''.join([chr(random.randint(0,255)) for x in self.key]))
@@ -245,7 +260,6 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         print("Running 10000 test, this may take some time, ...")
         avg_dist = 0
         
-        # check this several times
         # NOTE: this is a random test, it may occasionally fail
         for _ in range(10000):
             rnd = random.randint(0, (2**127) - 1)
@@ -258,10 +272,6 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             dist = hamming_distance(cp.anonymize(ip1), cp.anonymize(ip2))
             self.assertGreaterEqual(dist, 14)
             self.assertLessEqual(dist, 114)
-            # greater 50 may sometimes fail. This is a random test!
-            # on _average_ it should be greater 50!
-            #self.assertGreater(dist, 50)
-            #self.assertLess(dist, 78)
             avg_dist += dist
         
         avg_dist = avg_dist / 10000.0
