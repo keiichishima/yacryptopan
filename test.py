@@ -169,7 +169,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         self.prefix_preserving(raws, prefix_offset=96)
         self.prefix_preserving(anons, prefix_offset=96)
         
-    def test_ipv6_prefix_preserving(self):
+    def no_test_ipv6_prefix_preserving(self):
         """the same as test_ipv6_prefix_preserving_least_significant_random
         but shift the ipv4 addresses to higher positions. 
         For each ip, fill the lower bits with random.
@@ -197,12 +197,59 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             
             self.prefix_preserving(raws, prefix_offset=96-i)
             self.prefix_preserving(anons, prefix_offset=96-i)
+    
+    
+    def test_ipv6_hamming(self):
+        """The hamming distance between entrcypted IPv6 addresses which
+        do not share a common prefix is huge. Where huge means roughly 
+        the amount of bits not in the common prefix devided by two.
+        There is a chance of 50% that two perfectly randomly selected bits 
+        are equal. Consequently, about 50% should not be equal."""
+        cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
+        
+        def ipv6_bin(ip):
+            ip = bin(int(netaddr.IPAddress(ip, version=6)))
+            ip = ip[2:] #strip 0b prefix
+            ip = ip.rjust(128, b'0')
+            return ip
+        def hamming_distance(ip1, ip2):
+            difference = 0
+            for (b1, b2) in zip(ipv6_bin(ip1), ipv6_bin(ip2)):
+                if b1 != b2:
+                    difference += 1
+            return difference
+        self.assertEqual(hamming_distance("::1", "::2"), 2)
+        self.assertEqual(hamming_distance(1, 2), 2)
+        self.assertEqual(hamming_distance(0, 1 << 127), 1)
+        
+        dist = hamming_distance(0, cp.anonymize("::0"))
+        self.assertGreater(dist, 40)
+        
+        dist = hamming_distance(1 << 127, cp.anonymize(netaddr.IPAddress(1 << 127)))
+        self.assertGreater(dist, 50)
+        
+        # hamming distance of unencrypted IPs was 1
+        # encrypted, it should be on average 64!!
+        dist = hamming_distance(cp.anonymize(netaddr.IPAddress(1 << 127)), cp.anonymize("::0"))
+        self.assertGreater(dist, 60)
+        
+        # check this several times
+        # NOTE: this is a random test, it may occasionally fail
+        for _ in range(100):
+            rnd = random.randint(0, (2**46) - 1)
+            ip1 = netaddr.IPAddress(rnd)
+            ip2 = netaddr.IPAddress((1 << 127) + rnd)
+            # unencrypted: hamming distance is 1
+            self.assertEqual(hamming_distance(ip1, ip2), 1)
             
-        
-        
-    # further tests TODO
-    # two ipv6 addresses. all zero, exect one has the highest-order bit set.
-    # hamming distance 1
-    # after encrypting, hamming distance should be >= 40
+            # encrypted: hamming distance high!
+            dist = hamming_distance(cp.anonymize(ip1), cp.anonymize(ip2))
+            self.assertGreater(dist, 40)
+            # greater 50 may sometimes fail. This is a random test!
+            # on _average_ it should be greater 50!
+            self.assertGreater(dist, 50)
+    
+    # further test TODO
+    # test all tests which only do prefix_preserving with random key again 
 if __name__ == '__main__':
     unittest.main()
