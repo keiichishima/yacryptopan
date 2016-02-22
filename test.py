@@ -92,7 +92,9 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         """The test vector of the reference implementation is hacky-transformed
         to IPv6 addresses. The most significant bits of the IPv6 address are
         simply set to the 32 bit of the IPv4 address. We check that after 
-        anonymizing, the thing is still prefix-preserving."""
+        anonymizing, the thing is still prefix-preserving.
+        Converting back to IPv4 (extracting the 32 most significant bits), 
+        the same result as in IPv4 reference anonymization is computed."""
         def to_ip6(ip):
             ip = int(netaddr.IPAddress(ip, version=4))
             ip = netaddr.IPAddress(ip << 96, version=6)
@@ -125,12 +127,12 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             return "%s" % ip
         
         for i in range(len(self.testvector)):
-            anonymized = from_ip6(anons[i])
+            anonymized = anons[i]
             (sanity_check_raw, expected) = self.testvector[i]
             #sanity check: converting back to IPv4 gives the starting value
             self.assertEqual(sanity_check_raw, from_ip6(raws[i]))
             #anonymizing as IPv6 yields the same testvector result
-            self.assertEqual(anonymized, expected)
+            self.assertEqual(from_ip6(anonymized), expected)
         
             
         
