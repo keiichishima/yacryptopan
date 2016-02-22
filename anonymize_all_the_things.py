@@ -49,12 +49,18 @@ def main(filename):
             for m in ipv6.finditer(line):
                 ip = m.group(0)
                 if not do_not_anonymize(ip):
-                    line = line.replace(ip, cp.anonymize(ip), 1)
+                    ip_anonymized = cp.anonymize(ip)
+                    if do_not_anonymize(ip_anonymized):
+                        printStdErr("WARNING: anonymized ip address mapped to special-purpose address range. Please consider re-running with different key")
+                    line = line.replace(ip, ip_anonymized, 1)
                 
             for m in ipv4.finditer(line):
                 ip = m.group(0)
                 if not do_not_anonymize(ip):
-                    line = line.replace(ip, cp.anonymize(ip), 1)
+                    ip_anonymized = cp.anonymize(ip)
+                    if do_not_anonymize(ip_anonymized):
+                        printStdErr("WARNING: anonymized ip address mapped to special-purpose address range. Please consider re-running with different key")
+                    line = line.replace(ip, ip_anonymized, 1)
             print(line.rstrip('\n'),)
                 
 
