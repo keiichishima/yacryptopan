@@ -29,6 +29,7 @@ import logging
 from array import array
 from Crypto.Cipher import AES
 from functools import reduce
+# may need to be installed. python3 has something built-in
 from netaddr import IPNetwork
 
 _logger = logging.getLogger(__name__)
