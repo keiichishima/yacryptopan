@@ -41,9 +41,11 @@ class IPAddressCrypt(object):
         
     def anonymize(self, ip):
         if self.do_not_anonymize(ip):
+            #TODO anonymize but completely keep the prefix (i.e. only anonymize the least significant bits)
             return ip
         else:
             ip_anonymized = self.cp.anonymize(ip)
             if self.do_not_anonymize(ip_anonymized):
+                #TODO: anonymize again until we are in a `good` range?
                 printStdErr("WARNING: anonymized ip address mapped to special-purpose address range. Please consider re-running with different key")
             return ip_anonymized
