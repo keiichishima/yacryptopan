@@ -15,28 +15,34 @@ class ReferenceImplementationIPv4(unittest.TestCase):
     implementation of 
     http://www.cc.gatech.edu/computing/Telecomm/projects/cryptopan/"""
     
-    def prefix_preserving_static(self, raws):
+    def prefix_preserving_static(self, raws, prefix_offset=0):
         """For the testvector, checks if some ip addresses are subset of each
-        other. Manually hardcoded."""
-        assert ip_in_subnet(raws[0], raws[1], 12)
-        assert not(ip_in_subnet(raws[0], raws[2], 8))
-        assert ip_in_subnet(raws[0], raws[5], 32)
-        assert ip_in_subnet(raws[29], raws[30], 9)
-        assert ip_in_subnet(raws[63], raws[77], 12)
-        assert ip_in_subnet(raws[77], raws[78], 17)
-        assert ip_in_subnet(raws[87], raws[88], 3)
-        assert ip_in_subnet(raws[86], raws[87], 3)
-        
-    def prefix_reserving(self, raws):
-        self.prefix_preserving_static(raws)
-        self.prefix_preserving_dynamic(raws)
+        other. Manually hardcoded.
+        Add prefix_offset to the prefix"""
+        assert ip_in_subnet(raws[0], raws[1], 12+prefix_offset)
+        assert not(ip_in_subnet(raws[0], raws[2], 8+prefix_offset))
+        assert ip_in_subnet(raws[0], raws[5], 32+prefix_offset)
+        assert ip_in_subnet(raws[29], raws[30], 9+prefix_offset)
+        assert ip_in_subnet(raws[63], raws[77], 12+prefix_offset)
+        assert ip_in_subnet(raws[77], raws[78], 17+prefix_offset)
+        assert ip_in_subnet(raws[87], raws[88], 3+prefix_offset)
+        assert ip_in_subnet(raws[86], raws[87], 3+prefix_offset)
     
-    
-    def prefix_preserving_dynamic(self, raws):
+    def prefix_preserving_dynamic(self, raws, prefix_offset=0):
         """For the testvector, checks if some ip addresses are subset of each
         other. Check dynamically initialized."""
         for (ip_index, network_index, prefix_len,result) in self.pp_dynamic_testvector:
-            assert ip_in_subnet(raws[ip_index], raws[network_index], prefix_len) == result
+            assert ip_in_subnet(raws[ip_index], raws[network_index], prefix_len+prefix_offset) == result
+    
+    def prefix_preserving(self, raws, prefix_offset=0):
+        """About prefix_offset:
+            Usually, it is zero
+            If we map an ipv4 address into the least significant bits of an 
+            ipv6 address, we can set the prefix_offset to 96, which compensates 
+            for the 96 zeros we added by extending an ipv4 address to 128 bit.
+            """
+        self.prefix_preserving_static(raws, prefix_offset)
+        self.prefix_preserving_dynamic(raws, prefix_offset)
 
     def setUp(self):
         self.key = [21,34,23,141,51,164,207,128,19,10,91,22,73,144,125,16,216,152,143,131,121,121,101,39,98,87,76,45,42,132,34,2]
@@ -88,7 +94,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         print("sucessfully checked the %d IPv4s of the reference implementation" % len(self.testvector))
 
 
-    def test_ipv6_prefix_preserving_prepend(self):
+    def test_ipv6_prefix_preserving_prepend_reference(self):
         """The test vector of the reference implementation is hacky-transformed
         to IPv6 addresses. The most significant bits of the IPv6 address are
         simply set to the 32 bit of the IPv4 address. We check that after 
@@ -113,8 +119,8 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             raws.append(raw_ip6)
             anons.append(cp_ip6)
         
-        self.prefix_reserving(raws)
-        self.prefix_reserving(anons)
+        self.prefix_preserving(raws)
+        self.prefix_preserving(anons)
         
         # get the expected result back if we convert back to ipv4
         def from_ip6(ip):
@@ -133,6 +139,38 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             self.assertEqual(sanity_check_raw, from_ip6(raws[i]))
             #anonymizing as IPv6 yields the same testvector result
             self.assertEqual(from_ip6(anonymized), expected)
+            
+            
+            
+    def test_ipv6_prefix_preserving_least_significant_random(self):
+        """Map the testvector ipv4 address into the lower 32 bit of an
+        ipv6 address. Add a random but fixed prefix for all addresses.
+        Check that anonymization is still prefix preserving."""
+        prefix = (random.randint(0, (2**96) - 1)) << 32
+        
+        def to_ip6(ip):
+            ip = int(netaddr.IPAddress(ip, version=4))
+            ip = netaddr.IPAddress(prefix + ip, version=6)
+            return ip.format(netaddr.ipv6_verbose)
+            
+        cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
+        
+        raws = []
+        anons = []
+        
+        for (raw, _) in self.testvector:
+            raw_ip6 = to_ip6(raw)
+            # the verbose ipv6 string is 39 chars long
+            assert len(raw_ip6) == 39
+            cp_ip6 = cp.anonymize(raw_ip6)
+            raws.append(raw_ip6)
+            anons.append(cp_ip6)
+        
+        print(raws[:3])
+        
+        self.prefix_preserving(raws, prefix_offset=96)
+        self.prefix_preserving(anons, prefix_offset=96)
+        
         
             
         
