@@ -244,7 +244,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         # check this several times
         # NOTE: this is a random test, it may occasionally fail
         for _ in range(100):
-            rnd = random.randint(0, (2**46) - 1)
+            rnd = random.randint(0, (2**127) - 1)
             ip1 = netaddr.IPAddress(rnd)
             ip2 = netaddr.IPAddress((1 << 127) + rnd)
             # unencrypted: hamming distance is 1
@@ -252,8 +252,8 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             
             # encrypted: hamming distance high!
             dist = hamming_distance(cp.anonymize(ip1), cp.anonymize(ip2))
-            self.assertGreaterEqual(dist, 44)
-            self.assertLessEqual(dist, 84)
+            self.assertGreaterEqual(dist, 34)
+            self.assertLessEqual(dist, 94)
             # greater 50 may sometimes fail. This is a random test!
             # on _average_ it should be greater 50!
             #self.assertGreater(dist, 50)
