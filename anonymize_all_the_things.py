@@ -17,6 +17,21 @@ printStdErr("using key `%s'." % hexlify(key))
 printStdErr("save the key and hard-code it in this file to get reproducible results.")
 
 
+def do_not_anonymize(ip):
+    ip = netaddr.IPAddress(ip)
+    if ip.version == 4:
+        return (ip in netaddr.IPNetwork("10.0.0.0/8") or
+           ip in netaddr.IPNetwork("127.0.0.0/8") or
+           ip in netaddr.IPNetwork("172.16.0.0/12") or
+           ip in netaddr.IPNetwork("192.0.0.0/24") or
+           ip in netaddr.IPNetwork("192.0.2.0/24") or
+           ip in netaddr.IPNetwork("192.168.0.0/16") or
+           ip in netaddr.IPNetwork("224.0.0.0/4"))
+    else:
+        return False #IPv6 addresses can have MACs embedded
+        #be super conservative and anonymize them all
+       
+       
 cp = CryptoPAn(key)
 
 def main(filename):
@@ -33,16 +48,18 @@ def main(filename):
         for line in fp:
             for m in ipv6.finditer(line):
                 ip = m.group(0)
-                line = line.replace(ip, cp.anonymize(ip), 1)
+                if not do_not_anonymize(ip):
+                    line = line.replace(ip, cp.anonymize(ip), 1)
                 
             for m in ipv4.finditer(line):
                 ip = m.group(0)
-                line = line.replace(ip, cp.anonymize(ip), 1)
+                if not do_not_anonymize(ip):
+                    line = line.replace(ip, cp.anonymize(ip), 1)
             print(line.rstrip('\n'),)
                 
 
 if len(sys.argv) != 2:
-    printStdErr("Usage: %s input_file_name > anonymoized_output" % sys.argv[0])
+    printStdErr("Usage: %s input_file_name > anonymized_output" % sys.argv[0])
 else:
     main(sys.argv[1])
 
