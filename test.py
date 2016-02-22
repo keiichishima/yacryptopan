@@ -169,7 +169,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         self.prefix_preserving(raws, prefix_offset=96)
         self.prefix_preserving(anons, prefix_offset=96)
         
-    def no_test_ipv6_prefix_preserving(self):
+    def test_ipv6_prefix_preserving(self):
         """the same as test_ipv6_prefix_preserving_least_significant_random
         but shift the ipv4 addresses to higher positions. 
         For each ip, fill the lower bits with random.
@@ -205,7 +205,11 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         the amount of bits not in the common prefix devided by two.
         There is a chance of 50% that two perfectly randomly selected bits 
         are equal. Consequently, about 50% should not be equal."""
-        cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
+        
+        #random key!
+        cp = CryptoPAn(b''.join([chr(random.randint(0,255)) for x in self.key]))
+        
+        print("This test may _sometimes_ fail.")
         
         def ipv6_bin(ip):
             ip = bin(int(netaddr.IPAddress(ip, version=6)))
@@ -248,6 +252,8 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             # greater 50 may sometimes fail. This is a random test!
             # on _average_ it should be greater 50!
             self.assertGreater(dist, 50)
+        
+        print("test did not fail")
     
     # further test TODO
     # test all tests which only do prefix_preserving with random key again 
