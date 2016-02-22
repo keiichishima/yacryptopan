@@ -31,10 +31,10 @@ from Crypto.Cipher import AES
 from functools import reduce
 import sys
 if sys.version_info.major == 2:
-    # may need to be installed. python3 has something built-in
+    # python3 has something built-in
     from netaddr import IPNetwork
 elif sys.version_info.major == 3:
-    print("TODO: python3 compatibility")
+    print("TODO: python3 compatibility. Please use python2.")
 else:
     print("unkown python version")
     sys.exit(-1)
