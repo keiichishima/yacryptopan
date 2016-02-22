@@ -114,8 +114,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         self.prefix_reserving(raws)
         self.prefix_reserving(anons)
         
-        # will we get the expected reult back if we convert back to ipv4?
-        
+        # get the expected result back if we convert back to ipv4
         def from_ip6(ip):
             ip = netaddr.IPAddress(ip, version=6)
             ip = ip.format(netaddr.ipv6_verbose)[:9]
@@ -123,15 +122,15 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             ip = int(netaddr.IPAddress(ip, version=6))
             ip = ip >> 96
             ip = netaddr.IPAddress(ip, version=4)
-            return ip
+            return "%s" % ip
         
-        
-        #for i in range(len(self.testvector)):
-        #    anonymized = from_ip6(anons[i])
-        #    (_, expected) = self.testvector[i]
-        #    self.assertEqual(cp.anonymize(raw), expected)
-        #from_ip6(raws[0])
-        #from_ip6(anons[0])
+        for i in range(len(self.testvector)):
+            anonymized = from_ip6(anons[i])
+            (sanity_check_raw, expected) = self.testvector[i]
+            #sanity check: converting back to IPv4 gives the starting value
+            self.assertEqual(sanity_check_raw, from_ip6(raws[i]))
+            #anonymizing as IPv6 yields the same testvector result
+            self.assertEqual(anonymized, expected)
         
             
         
