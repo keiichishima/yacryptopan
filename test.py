@@ -3,8 +3,8 @@ import unittest
 from yacryptopan import CryptoPAn
 
 class ReferenceImplementationIPv4(unittest.TestCase):
-    """Compares this implementation with the results shiped with the reference 
-    implemenation of 
+    """Compares this implementation with the results shipped with the reference 
+    implementation of 
     http://www.cc.gatech.edu/computing/Telecomm/projects/cryptopan/"""
 
     def setUp(self):
