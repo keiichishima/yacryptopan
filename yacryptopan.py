@@ -30,14 +30,10 @@ from array import array
 from Crypto.Cipher import AES
 from functools import reduce
 import sys
-if sys.version_info.major == 2:
-    # python3 has something built-in
+if sys.version_info < (3, 3):
     from netaddr import IPNetwork
-elif sys.version_info.major == 3:
-    import ipaddress
 else:
-    print("unkown python version")
-    sys.exit(-1)
+    import ipaddress
 
 _logger = logging.getLogger(__name__)
 
@@ -97,12 +93,12 @@ class CryptoPAn(object):
             An anoymized IP address string.
         """
         aaddr = None
-        if sys.version_info.major == 2:
-            # for Python2
+        if sys.version_info < (3, 3):
+            # for Python before 3.3
             ip = IPNetwork(addr)
             aaddr = self.anonymize_bin(ip.value, ip.version)
         else:
-            # for Python3 (and later?)
+            # for newer Python3 (and later?)
             ip = ipaddress.ip_address(addr)
             aaddr = self.anonymize_bin(int(ip), ip.version)
         if ip.version == 4:
