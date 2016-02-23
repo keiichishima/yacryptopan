@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 from setuptools import setup
+import sys
 
 try:
     from pypandoc import convert
@@ -11,6 +12,10 @@ except ImportError:
     print('pandoc is not installed.')
     read_md = lambda f: open(f, 'r').read()
 
+install_requires = ['pycrypto>=2.6.1']
+if sys.version_info < (3, 3):
+    install_requires.extend(['netaddr>=0.7.15'])
+
 setup(name='yacryptopan',
       version='0.0.3',
       description='Yet another Crypto-PAn implementation for Python',
@@ -18,7 +23,7 @@ setup(name='yacryptopan',
       author='Keiichi SHIMA',
       author_email='keiichi@iijlab.net',
       py_modules=['yacryptopan'],
-      install_requires=['pycrypto>=2.6.1', 'netaddr>=0.7.15'],
+      install_requires=install_requires,
       classifiers=[
           'Development Status :: 4 - Beta',
           'Environment :: Console',

@@ -60,7 +60,7 @@ class IPAddressCrypt(object):
         ip = int(special_net.ip) + (int(netaddr.IPAddress(ip)) % 2**(32-special_net.prefixlen))
         ip = netaddr.IPAddress(ip)
         return ip
-    
+
     def anonymize(self, ip):
         if self.do_not_anonymize(ip):
             #TODO anonymize but completely keep the prefix (i.e. only anonymize the least significant bits)
