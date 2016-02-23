@@ -42,7 +42,7 @@ fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|     # fe80::7:8%eth0   fe80::7:8%
 ([0-9a-fA-F]{1,4}:){1,7}:|                         # 1::                              1:2:3:4:5:6:7::
 :((:[0-9a-fA-F]{1,4}){1,7}|:)                     # ::2:3:4:5:6:7:8  ::2:3:4:5:6:7:8 ::8       ::     
 )""", re.X)
-    
+    mac_address = re.compile(r"""\s((?:[0-9a-fA-F]{2}:?){6})(?=\s)""") #enclosed in spaces, last space not consumed
     
     with open(filename, 'r') as fp:
         for line in fp:
@@ -55,6 +55,12 @@ fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|     # fe80::7:8%eth0   fe80::7:8%
                 ip = m.group(0)
                 ip_anonymized = cp.anonymize(ip)
                 line = line.replace(ip, ip_anonymized, 1)
+                
+            for m in mac_address.finditer(line):
+                mac = m.group(1) #does not include surrounding spaces
+                mac_anonymized = "XX:XX:XX:XX:XX:XX"
+                line = line.replace(mac, mac_anonymized, 1)
+                
             print(line.rstrip('\n'),)
                 
 
