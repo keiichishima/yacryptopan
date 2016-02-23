@@ -24,13 +24,13 @@ class IPAddressCrypt(object):
     """
     def __init__(self, key):
         self.cp = CryptoPAn(key)
-        
+
     def is_special_purpose_ipv4(self, ip):
         for net in special_purpose_ipv4:
             if ip in net:
                 return True
         return False
-    
+
     def do_not_anonymize(self, ip):
         ip = netaddr.IPAddress(ip)
         if ip.version == 4:
@@ -38,7 +38,7 @@ class IPAddressCrypt(object):
         else:
             return False #IPv6 addresses can have MACs embedded
             #be super conservative and anonymize them all
-        
+
     def anonymize(self, ip):
         if self.do_not_anonymize(ip):
             #TODO anonymize but completely keep the prefix (i.e. only anonymize the least significant bits)

@@ -15,13 +15,13 @@ printStdErr("save the key and hard-code it in this file to get reproducible resu
 
 #this key triggers errors in my test data (mapping sth to special-purpose ranges):
 # 2001b69af7e2751288b44eeb5871f175530e58f29e2f02b113f9570174816746
-       
+
 
 cp = IPAddressCrypt(key)
 
 def main(filename):
     printStdErr("opening %s" % filename)
-    
+
     #http://stackoverflow.com/questions/53497/regular-expression-that-matches-valid-ipv6-addresses
     ipv4 = re.compile(r"""(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)""")
     ipv6 = re.compile(r"""(
@@ -42,21 +42,21 @@ fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|     # fe80::7:8%eth0   fe80::7:8%
 ([0-9a-fA-F]{1,4}:){1,7}:|                         # 1::                              1:2:3:4:5:6:7::
 :((:[0-9a-fA-F]{1,4}){1,7}|:)                     # ::2:3:4:5:6:7:8  ::2:3:4:5:6:7:8 ::8       ::     
 )""", re.X)
-    
-    
+
+
     with open(filename, 'r') as fp:
         for line in fp:
             for m in ipv6.finditer(line):
                 ip = m.group(0)
                 ip_anonymized = cp.anonymize(ip)
                 line = line.replace(ip, ip_anonymized, 1)
-                
+
             for m in ipv4.finditer(line):
                 ip = m.group(0)
                 ip_anonymized = cp.anonymize(ip)
                 line = line.replace(ip, ip_anonymized, 1)
             print(line.rstrip('\n'),)
-                
+
 
 if len(sys.argv) != 2:
     printStdErr("Usage: %s input_file_name > anonymized_output" % sys.argv[0])
