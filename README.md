@@ -40,6 +40,10 @@ Security Evaluation and a New Cryptography-based Scheme", in
 Proceedings of the IEEE International Conference on Network Protocols,
 Paris, 2002.
 
+## Contributors
+
+- Cornelius Diekmann, https://github.com/diekmann
+
 ## Author
 
 Keiichi SHIMA
