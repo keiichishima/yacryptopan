@@ -34,7 +34,7 @@ if sys.version_info.major == 2:
     # python3 has something built-in
     from netaddr import IPNetwork
 elif sys.version_info.major == 3:
-    print("TODO: python3 compatibility. Please use python2.")
+    import ipaddress
 else:
     print("unkown python version")
     sys.exit(-1)
@@ -55,12 +55,12 @@ class CryptoPAn(object):
         assert(len(key) == 32)
         self._cipher = AES.new(key[:16])
         self._padding = array('B')
-        try:
-            # for Python3
-            self._padding.frombytes(self._cipher.encrypt(key[16:]))
-        except AttributeError:
+        if sys.version_info.major == 2:
             # for Python2
             self._padding.fromstring(self._cipher.encrypt(key[16:]))
+        else:
+            # for Python3 (and later?)
+            self._padding.frombytes(self._cipher.encrypt(key[16:]))
         self._padding_int = self._to_int(self._padding)
         self._gen_masks()
 
@@ -96,8 +96,15 @@ class CryptoPAn(object):
         Returns:
             An anoymized IP address string.
         """
-        ip = IPNetwork(addr)
-        aaddr = self.anonymize_bin(ip.value, ip.version)
+        aaddr = None
+        if sys.version_info.major == 2:
+            # for Python2
+            ip = IPNetwork(addr)
+            aaddr = self.anonymize_bin(ip.value, ip.version)
+        else:
+            # for Python3 (and later?)
+            ip = ipaddress.ip_address(addr)
+            aaddr = self.anonymize_bin(int(ip), ip.version)
         if ip.version == 4:
             return '%d.%d.%d.%d' % (aaddr>>24, (aaddr>>16) & 0xff,
                                     (aaddr>>8) & 0xff, aaddr & 0xff)
@@ -133,12 +140,12 @@ class CryptoPAn(object):
         for pos in range(pos_max):
             prefix = ext_addr >> (128 - pos) << (128 - pos)
             padded_addr = prefix | (self._padding_int & self._masks[pos])
-            try:
-                # for Python3
-                f = self._cipher.encrypt(self._to_array(padded_addr, 16).tobytes())
-            except AttributeError:
+            if sys.version_info.major == 2:
                 # for Python2
                 f = self._cipher.encrypt(self._to_array(padded_addr, 16).tostring())
+            else:
+                # for Python3 (and later?)
+                f = self._cipher.encrypt(self._to_array(padded_addr, 16).tobytes())
             flip_array.append(bytearray(f)[0] >> 7)
         result = reduce(lambda x, y: (x << 1) | y, flip_array)
 
