@@ -24,7 +24,7 @@ class IPAddressCrypt(object):
     """
     def __init__(self, key):
         self.cp = CryptoPAn(key)
-    
+        
     def get_special_purpose_net(self, ip):
         ip = netaddr.IPAddress(ip)
         if ip.version == 4:
@@ -49,10 +49,15 @@ class IPAddressCrypt(object):
             #be super conservative and anonymize them all
     
     def __map_to_special_purpose_net(self, ip, special_net):
+        """Example:
+        
+        __map_to_special_purpose_net(netaddr.IPAddress("1.2.3.5"), netaddr.IPNetwork("192.168.0.0/16"))) = 192.168.3.5
+        __map_to_special_purpose_net(netaddr.IPAddress("1.2.3.5"), netaddr.IPNetwork("127.0.0.0/8"))) = 127.2.3.5
+        """
         #TODO: only support ipv4. there should be a library function for this?
         #assert that host-bits of net are all zero. Will fail for IPv6
         assert ((int(special_net.ip) << special_net.prefixlen) & 0xFFFFFFFF) == 0
-        ip = int(special_net.ip) + (int(netaddr.IPAddress(ip)) % 2^(32-special_net.prefixlen))
+        ip = int(special_net.ip) + (int(netaddr.IPAddress(ip)) % 2**(32-special_net.prefixlen))
         ip = netaddr.IPAddress(ip)
         return ip
     
