@@ -29,7 +29,15 @@ import logging
 from array import array
 from Crypto.Cipher import AES
 from functools import reduce
-from netaddr import IPNetwork
+import sys
+if sys.version_info.major == 2:
+    # python3 has something built-in
+    from netaddr import IPNetwork
+elif sys.version_info.major == 3:
+    print("TODO: python3 compatibility. Please use python2.")
+else:
+    print("unkown python version")
+    sys.exit(-1)
 
 _logger = logging.getLogger(__name__)
 
