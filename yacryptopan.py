@@ -49,6 +49,9 @@ class CryptoPAn(object):
                  are used for the AES key, and the latter for padding.
         """
         assert(len(key) == 32)
+        if sys.version_info.major == 3:
+            # encode the key string to a byte array.
+            key = key.encode('utf-8')
         self._cipher = AES.new(key[:16], AES.MODE_ECB)
         self._padding = array('B')
         if sys.version_info.major == 2:
