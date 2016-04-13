@@ -12,7 +12,7 @@ except ImportError:
     print('pandoc is not installed.')
     read_md = lambda f: open(f, 'r').read()
 
-install_requires = ['pycrypto>=2.6.1']
+install_requires = ['pycryptodome>=3.4']
 if sys.version_info < (3, 3):
     install_requires.extend(['netaddr>=0.7.15'])
 
