@@ -43,6 +43,7 @@ Paris, 2002.
 ## Contributors
 
 - Cornelius Diekmann, https://github.com/diekmann
+- Matteo Pergolesi, https://github.com/TheWall89
 
 ## Author
 
