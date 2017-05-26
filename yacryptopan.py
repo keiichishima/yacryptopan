@@ -50,8 +50,11 @@ class CryptoPAn(object):
         """
         assert(len(key) == 32)
         if sys.version_info.major == 3:
-            # encode the key string to a byte array.
-            key = key.encode('utf-8')
+            # XXX what is this?
+            # XXX encode the key string to a byte array.
+            # XXX key = key.encode('utf-8')
+            # XXX incompatibility to previous version!!
+            assert type(key) is bytes
         self._cipher = AES.new(key[:16], AES.MODE_ECB)
         self._padding = array('B')
         if sys.version_info.major == 2:

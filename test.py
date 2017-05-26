@@ -3,12 +3,38 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import unittest
 import random
 from yacryptopan import CryptoPAn
-import netaddr
+import sys
+if sys.version_info < (3, 3):
+    # python 2 compatibility
+    import netaddr
+    def mk_ip_address(a, version=None):
+        return netaddr.IPAddress(a, version=version)
+    def mk_ip_network(a):
+        return netaddr.IPNetwork(a)
+    def format_ip_verbose(ip):
+        return ip.format(netaddr.ipv6_verbose)
+
+    # for bulding the CryptoPAn key
+    def bytes(ls):
+        return b''.join([chr(x) for x in ls])
+else:
+    import ipaddress
+    def mk_ip_address(a, version=None):
+        assert version is None or version == 4 or version == 6
+        if version == 4:
+            return ipaddress.IPv4Address(a)
+        elif version == 6:
+            return ipaddress.IPv6Address(a)
+        else:
+            return ipaddress.ip_address(a)
+    def mk_ip_network(a):
+        return ipaddress.ip_network(a, strict=False)
+    def format_ip_verbose(ip):
+        return ip.exploded
+
 
 def ip_in_subnet(ip, subnet_ip, prefix_len):
-    #python2 only
-    from netaddr import IPNetwork, IPAddress
-    return (IPAddress(ip) in IPNetwork("%s/%d" % (subnet_ip, prefix_len)))
+    return (mk_ip_address(ip) in mk_ip_network("%s/%d" % (subnet_ip, prefix_len)))
 
 class ReferenceImplementationIPv4(unittest.TestCase):
     """Compares this implementation with the results shipped with the reference
@@ -47,8 +73,8 @@ class ReferenceImplementationIPv4(unittest.TestCase):
     def setUp(self):
         self.key = [21,34,23,141,51,164,207,128,19,10,91,22,73,144,125,16,216,152,143,131,121,121,101,39,98,87,76,45,42,132,34,2]
 
-        f_raw = open("testdata/sample_trace_raw.dat", 'rb') #encoding='ASCII'
-        f_anon = open("testdata/sample_trace_sanitized.dat", 'rb')
+        f_raw = open("testdata/sample_trace_raw.dat", 'r') #encoding='ASCII'
+        f_anon = open("testdata/sample_trace_sanitized.dat", 'r')
 
         def extract_IP(s):
             return s.split('\t')[2].strip()
@@ -88,7 +114,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         self.prefix_preserving_dynamic([v for (k,v) in self.testvector])
 
     def test_sample_trace(self):
-        cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
+        cp = CryptoPAn(bytes(self.key))
         for (raw, anon) in self.testvector:
             self.assertEqual(cp.anonymize(raw), anon)
         print("sucessfully checked the %d IPv4s of the reference implementation" % len(self.testvector))
@@ -102,11 +128,11 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         Converting back to IPv4 (extracting the 32 most significant bits),
         the same result as in IPv4 reference anonymization is computed."""
         def to_ip6(ip):
-            ip = int(netaddr.IPAddress(ip, version=4))
-            ip = netaddr.IPAddress(ip << 96, version=6)
-            return ip.format(netaddr.ipv6_verbose)
+            ip = int(mk_ip_address(ip, version=4))
+            ip = mk_ip_address(ip << 96, version=6)
+            return format_ip_verbose(ip)
 
-        cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
+        cp = CryptoPAn(bytes(self.key))
 
         raws = []
         anons = []
@@ -124,12 +150,12 @@ class ReferenceImplementationIPv4(unittest.TestCase):
 
         # get the expected result back if we convert back to ipv4
         def from_ip6(ip):
-            ip = netaddr.IPAddress(ip, version=6)
-            ip = ip.format(netaddr.ipv6_verbose)[:9]
+            ip = mk_ip_address(ip, version=6)
+            ip = format_ip_verbose(ip)[:9]
             ip = "%s::0" % ip
-            ip = int(netaddr.IPAddress(ip, version=6))
+            ip = int(mk_ip_address(ip, version=6))
             ip = ip >> 96
-            ip = netaddr.IPAddress(ip, version=4)
+            ip = mk_ip_address(ip, version=4)
             return "%s" % ip
 
         for i in range(len(self.testvector)):
@@ -149,11 +175,11 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         prefix = (random.randint(0, (2**96) - 1)) << 32
 
         def to_ip6(ip):
-            ip = int(netaddr.IPAddress(ip, version=4))
-            ip = netaddr.IPAddress(prefix + ip, version=6)
-            return ip.format(netaddr.ipv6_verbose)
+            ip = int(mk_ip_address(ip, version=4))
+            ip = mk_ip_address(prefix + ip, version=6)
+            return format_ip_verbose(ip)
 
-        cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
+        cp = CryptoPAn(bytes(self.key))
 
         raws = []
         anons = []
@@ -174,7 +200,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         but shift the ipv4 addresses to higher positions.
         For each ip, fill the lower bits with random.
         May take some time to complete."""
-        cp = CryptoPAn(b''.join([chr(x) for x in self.key]))
+        cp = CryptoPAn(bytes(self.key))
 
         print("This test may take some time to complete.")
 
@@ -182,9 +208,9 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             prefix = (random.randint(0, (2**(96-i)) - 1)) << (32+i)
 
             def to_ip6(ip):
-                ip = int(netaddr.IPAddress(ip, version=4))
-                ip = netaddr.IPAddress(prefix + (ip<<i) + random.randint(0, (2**i) - 1), version=6)
-                return ip.format(netaddr.ipv6_verbose)
+                ip = int(mk_ip_address(ip, version=4))
+                ip = mk_ip_address(prefix + (ip<<i) + random.randint(0, (2**i) - 1), version=6)
+                return format_ip_verbose(ip)
 
             raws = []
             anons = []
@@ -224,15 +250,12 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         """
 
         #random key!
-        cp = CryptoPAn(b''.join([chr(random.randint(0,255)) for x in self.key]))
+        cp = CryptoPAn(bytes([random.randint(0,255) for _ in self.key]))
 
         print("This test may _sometimes_ fail.")
 
         def ipv6_bin(ip):
-            ip = bin(int(netaddr.IPAddress(ip, version=6)))
-            ip = ip[2:] #strip 0b prefix
-            ip = ip.rjust(128, b'0')
-            return ip
+            return "{:0128b}".format(int(mk_ip_address(ip, version=6)))
         def hamming_distance(ip1, ip2):
             difference = 0
             for (b1, b2) in zip(ipv6_bin(ip1), ipv6_bin(ip2)):
@@ -246,13 +269,13 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         dist = hamming_distance(0, cp.anonymize("::0"))
         self.assertGreater(dist, 40)
 
-        dist = hamming_distance(1 << 127, cp.anonymize(netaddr.IPAddress(1 << 127)))
+        dist = hamming_distance(1 << 127, cp.anonymize(mk_ip_address(1 << 127)))
         self.assertGreaterEqual(dist, 44)
         self.assertLessEqual(dist, 84)
 
         # hamming distance of unencrypted IPs was 1
         # encrypted, it should be on average 64!!
-        dist = hamming_distance(cp.anonymize(netaddr.IPAddress(1 << 127)), cp.anonymize("::0"))
+        dist = hamming_distance(cp.anonymize(mk_ip_address(1 << 127)), cp.anonymize("::0"))
         self.assertGreaterEqual(dist, 44)
         self.assertLessEqual(dist, 84)
 
@@ -263,8 +286,8 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         # NOTE: this is a random test, it may occasionally fail
         for _ in range(10000):
             rnd = random.randint(0, (2**127) - 1)
-            ip1 = netaddr.IPAddress(rnd)
-            ip2 = netaddr.IPAddress((1 << 127) + rnd)
+            ip1 = mk_ip_address(rnd)
+            ip2 = mk_ip_address((1 << 127) + rnd)
             # unencrypted: hamming distance is 1
             self.assertEqual(hamming_distance(ip1, ip2), 1)
 

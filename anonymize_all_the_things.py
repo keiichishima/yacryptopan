@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import absolute_import, division, print_function, unicode_literals
+#!/usr/bin/env python3
 from ipaddresscrypto import IPAddressCrypt, printStdErr
 from Crypto import Random #CSPSRNG
 from binascii import hexlify, unhexlify

@@ -1,21 +1,19 @@
-#!/usr/bin/env python
-from __future__ import absolute_import, division, print_function, unicode_literals
+#!/usr/bin/env python3
 import sys
-import netaddr
+import ipaddress
 from yacryptopan import CryptoPAn
-import netaddr
 
-def printStdErr(*objs):
-    print(*objs, file=sys.stderr)
+def printStdErr(s):
+    print(s, file=sys.stderr)
 
 
-special_purpose_ipv4 = [netaddr.IPNetwork("10.0.0.0/8"),
-                        netaddr.IPNetwork("127.0.0.0/8"),
-                        netaddr.IPNetwork("172.16.0.0/12"),
-                        netaddr.IPNetwork("192.0.0.0/24"),
-                        netaddr.IPNetwork("192.0.2.0/24"),
-                        netaddr.IPNetwork("192.168.0.0/16"),
-                        netaddr.IPNetwork("224.0.0.0/4")]
+special_purpose_ipv4 = [ipaddress.ip_network("10.0.0.0/8"),
+                        ipaddress.ip_network("127.0.0.0/8"),
+                        ipaddress.ip_network("172.16.0.0/12"),
+                        ipaddress.ip_network("192.0.0.0/24"),
+                        ipaddress.ip_network("192.0.2.0/24"),
+                        ipaddress.ip_network("192.168.0.0/16"),
+                        ipaddress.ip_network("224.0.0.0/4")]
 
 #TODO inherit CryptoPAn?
 class IPAddressCrypt(object):
@@ -26,7 +24,7 @@ class IPAddressCrypt(object):
         self.cp = CryptoPAn(key)
         
     def get_special_purpose_net(self, ip):
-        ip = netaddr.IPAddress(ip)
+        ip = ipaddress.ip_address(ip)
         if ip.version == 4:
             for net in special_purpose_ipv4:
                 if ip in net:
@@ -41,7 +39,7 @@ class IPAddressCrypt(object):
         return (self.get_special_purpose_net(ip) is not None)
     
     def do_not_anonymize(self, ip):
-        ip = netaddr.IPAddress(ip)
+        ip = ipaddress.ip_address(ip)
         if ip.version == 4:
             return self.is_special_purpose(ip)
         else:
@@ -51,14 +49,14 @@ class IPAddressCrypt(object):
     def __map_to_special_purpose_net(self, ip, special_net):
         """Example:
         
-        __map_to_special_purpose_net(netaddr.IPAddress("1.2.3.5"), netaddr.IPNetwork("192.168.0.0/16"))) = 192.168.3.5
-        __map_to_special_purpose_net(netaddr.IPAddress("1.2.3.5"), netaddr.IPNetwork("127.0.0.0/8"))) = 127.2.3.5
+        __map_to_special_purpose_net(ipaddress.IPAddress("1.2.3.5"), ipaddress.ip_network("192.168.0.0/16"))) = 192.168.3.5
+        __map_to_special_purpose_net(ipaddress.IPAddress("1.2.3.5"), ipaddress.ip_network("127.0.0.0/8"))) = 127.2.3.5
         """
         #TODO: only support ipv4. there should be a library function for this?
         #assert that host-bits of net are all zero. Will fail for IPv6
         assert ((int(special_net.ip) << special_net.prefixlen) & 0xFFFFFFFF) == 0
-        ip = int(special_net.ip) + (int(netaddr.IPAddress(ip)) % 2**(32-special_net.prefixlen))
-        ip = netaddr.IPAddress(ip)
+        ip = int(special_net.ip) + (int(ipaddress.IPAddress(ip)) % 2**(32-special_net.prefixlen))
+        ip = ipaddress.IPAddress(ip)
         return ip
 
     def anonymize(self, ip):
