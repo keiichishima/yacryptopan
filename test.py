@@ -317,8 +317,8 @@ class Examples(unittest.TestCase):
         ret = subprocess.run([sys.executable, example_prog, 'testdata/nasty.txt', key], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.assertEqual(ret.returncode, 0)
         expected = b"""foobar 117.8.135.123
-v6foobar 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79 foo 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79 foooshorter 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79 even shorter 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79
-ipv6 url http://[1f18:bc7b:945c:669b:2e19:9a2e:377:6486]:8080/
+v6foobar 1482:f447:75b3:f1f9:fbdf:622e:34f:ff7b foo 1482:f447:75b3:f1f9:fbdf:622e:34f:ff7b foooshorter 1482:f447:75b3:f1f9:fbdf:622e:34f:ff7b even shorter 1482:f447:75b3:f1f9:fbdf:622e:34f:ff7b
+ipv6 url http://[1482:f447:75b3:f904:c1d9:ba2e:489:1346]:8080/
 -A FORWARD -d 162.112.255.43/19 -s 162.112.255.43/19 -j ACCEPT
 -A OUTPUT -d 55.21.62.136 -j ACCEPT
 -A INPUT -s 240.232.0.156/32 -m iprange ! --src-range 56.131.176.115-240.15.248.0
@@ -331,7 +331,7 @@ IPv6 address which looks almost like a MAC: 1f18:b37b:1cc3:8118:41f:9fd1:f875:fa
 ipv4 embedded ipv6 3883:b073:ff0f:fff8:203f:7c8:617:fd01
 a line with no IP addresses
 f33c:8ca3:ef0f:e019:e7ff:f1e3:f91f:f800/7 f33c:8ca3:ef0f:e019:e7ff:f1e3:f91f:f800
-1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff
+2001:db8:e01:891e:401:3:f8fb:44ff 2001:db8:e01:891e:401:3:f8fb:44ff 2001:db8:e01:891e:401:3:f8fb:44ff 2001:db8:e01:891e:401:3:f8fb:44ff 2001:db8:e01:891e:401:3:f8fb:44ff 2001:db8:e01:891e:401:3:f8fb:44ff 2001:db8:e01:891e:401:3:f8fb:44ff 2001:db8:e01:891e:401:3:f8fb:44ff
 """
         self.assertEqual(ret.stdout, expected)
 

@@ -25,13 +25,15 @@ def print_std_err(str_):
     print(str_, file=sys.stderr)
 
 
-# Example: sompe IPv4 special purpose ranges
+# Example: sompe special purpose ranges
 SPECIAL_PURPOSE = [ip_network("10.0.0.0/8"),
                    ip_network("172.16.0.0/12"),
                    ip_network("192.0.0.0/24"),
                    ip_network("192.0.2.0/24"),
                    ip_network("192.168.0.0/16"),
-                   ip_network("224.0.0.0/4")]
+                   ip_network("224.0.0.0/4"),
+                   ip_network("2001:db8::/32") #IPv6 Address Prefix Reserved for Documentation
+                   ]
 
 def main(filename):
     global KEY
