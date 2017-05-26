@@ -9,6 +9,7 @@ special v6: :: ::1 0:0::0
 do not anonymize mac addresses
  HWaddr ab:ab:ab:ab:ab:ab FF:FF:FF:FF:FF:FF  foo
  HWaddr with line ending ab:ab:ab:ab:ab:ab
+IPv6 address which looks almost like a MAC: 2001:b8:a3:00:00:2e:70:44
 ipv4 embedded ipv6 ::ffff:192.0.2.128
 a line with no IP addresses
 fc00::/7 fc00::

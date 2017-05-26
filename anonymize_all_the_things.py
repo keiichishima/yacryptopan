@@ -1,25 +1,31 @@
 #!/usr/bin/env python3
-from ipaddresscrypto import IPAddressCrypt, print_std_err
-from Crypto import Random #CSPSRNG
+import re
+import sys
 from binascii import hexlify, unhexlify
-import re, sys
+from ipaddress import ip_network, ip_address
+from Crypto import Random #CSPSRNG
+from ipaddresscrypto import IPAddressCrypt
 
-print_std_err("generating new random key.")
-key = Random.new().read(32)
-# insert hard-coded key here
-#key = unhexlify('d70ae6667960559165d275c487624045eb8cc5c86ce20906dcc0521b7716089d')
-print_std_err("using key `%s'." % hexlify(key))
-print_std_err("save the key and hard-code it in this file to get reproducible results.")
+# insert hard-coded key here, keep it None to get a fresh one
+# key = unhexlify('d70ae6667960559165d275c487624045eb8cc5c86ce20906dcc0521b7716089d')
+KEY = None
+
+def print_std_err(str_):
+    """Print all errors and debug output to stderr.
+    So stdout output is the anonymized file."""
+    print(str_, file=sys.stderr)
 
 
-#this key triggers errors in my test data (mapping sth to special-purpose ranges):
-# 2001b69af7e2751288b44eeb5871f175530e58f29e2f02b113f9570174816746
-
-
-cp = IPAddressCrypt(key)
+# Example: sompe IPv4 special purpose ranges
+SPECIAL_PURPOSE = [ip_network("10.0.0.0/8"),
+                   ip_network("172.16.0.0/12"),
+                   ip_network("192.0.0.0/24"),
+                   ip_network("192.0.2.0/24"),
+                   ip_network("192.168.0.0/16"),
+                   ip_network("224.0.0.0/4")]
 
 def main(filename):
-    print_std_err("opening %s" % filename)
+    global KEY
 
     #http://stackoverflow.com/questions/53497/regular-expression-that-matches-valid-ipv6-addresses
     ipv4 = re.compile(r"""(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)""")
@@ -44,6 +50,15 @@ fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|     # fe80::7:8%eth0   fe80::7:8%
     mac_address = re.compile(r"""\s((?:[0-9a-fA-F]{2}:?){6})(?=\s)""") #enclosed in spaces, last space not consumed
 
 
+    if KEY is None:
+        print_std_err("generating new random key.")
+        KEY = Random.new().read(32)
+        print_std_err("using key `{}'.".format(hexlify(KEY)))
+        print_std_err("save the key and hard-code it in this file to get reproducible results.")
+
+    cp = IPAddressCrypt(KEY, preserve_prefix=SPECIAL_PURPOSE)
+
+    print_std_err("opening {}".format(filename))
     with open(filename, 'r') as fp:
         for line in fp:
             for m in ipv6.finditer(line):
@@ -64,8 +79,9 @@ fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|     # fe80::7:8%eth0   fe80::7:8%
             print(line.rstrip('\n'),)
 
 
-if len(sys.argv) != 2:
-    print_std_err("Usage: %s input_file_name > anonymized_output" % sys.argv[0])
-else:
-    main(sys.argv[1])
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print_std_err("Usage: {} input_file_name > anonymized_output".format(sys.argv[0]))
+    else:
+        main(sys.argv[1])
 
