@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Example File
+Example File.
 Reads a text file with IP addresses and write an anomymized version to std out.
 Loopback addresses are not anomymized.
-Only the host part of private addresses gets randomized.
+Only the host part of some special purpose ranges gets anonymized.
 Censors MAC addresses, does not care whether IPv6 addresses have MAC addresses embedded.
 """
 

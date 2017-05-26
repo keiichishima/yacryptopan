@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example File
+Example File.
 A wrapper around CryptoPAn with some (probably unsound) features. It anonymizes
 IP addresses, but there is an option not to anonymize certain IP addresses
 or to preserve the prefix for certain ranges.
