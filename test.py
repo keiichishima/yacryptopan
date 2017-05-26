@@ -35,7 +35,7 @@ else:
 
 
 def ip_in_subnet(ip, subnet_ip, prefix_len):
-    return (mk_ip_address(ip) in mk_ip_network("%s/%d" % (subnet_ip, prefix_len)))
+    return mk_ip_address(ip) in mk_ip_network("%s/%d" % (subnet_ip, prefix_len))
 
 class ReferenceImplementationIPv4(unittest.TestCase):
     """Compares this implementation with the results shipped with the reference
@@ -46,20 +46,20 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         """For the testvector, checks if some ip addresses are subset of each
         other. Manually hardcoded.
         Add prefix_offset to the prefix"""
-        assert ip_in_subnet(raws[0], raws[1], 12+prefix_offset)
-        assert not(ip_in_subnet(raws[0], raws[2], 8+prefix_offset))
-        assert ip_in_subnet(raws[0], raws[5], 32+prefix_offset)
-        assert ip_in_subnet(raws[29], raws[30], 9+prefix_offset)
-        assert ip_in_subnet(raws[63], raws[77], 12+prefix_offset)
-        assert ip_in_subnet(raws[77], raws[78], 17+prefix_offset)
-        assert ip_in_subnet(raws[87], raws[88], 3+prefix_offset)
-        assert ip_in_subnet(raws[86], raws[87], 3+prefix_offset)
+        self.assertTrue(ip_in_subnet(raws[0], raws[1], 12+prefix_offset))
+        self.assertTrue(not ip_in_subnet(raws[0], raws[2], 8+prefix_offset))
+        self.assertTrue(ip_in_subnet(raws[0], raws[5], 32+prefix_offset))
+        self.assertTrue(ip_in_subnet(raws[29], raws[30], 9+prefix_offset))
+        self.assertTrue(ip_in_subnet(raws[63], raws[77], 12+prefix_offset))
+        self.assertTrue(ip_in_subnet(raws[77], raws[78], 17+prefix_offset))
+        self.assertTrue(ip_in_subnet(raws[87], raws[88], 3+prefix_offset))
+        self.assertTrue(ip_in_subnet(raws[86], raws[87], 3+prefix_offset))
 
     def prefix_preserving_dynamic(self, raws, prefix_offset=0):
         """For the testvector, checks if some ip addresses are subset of each
         other. Check dynamically initialized."""
-        for (ip_index, network_index, prefix_len,result) in self.pp_dynamic_testvector:
-            assert ip_in_subnet(raws[ip_index], raws[network_index], prefix_len+prefix_offset) == result
+        for (ip_index, network_index, prefix_len, result) in self.pp_dynamic_testvector:
+            self.assertEqual(ip_in_subnet(raws[ip_index], raws[network_index], prefix_len+prefix_offset), result)
 
     def prefix_preserving(self, raws, prefix_offset=0):
         """About prefix_offset:
@@ -88,19 +88,19 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         f_raw.close()
         f_anon.close()
 
-        assert len(self.testvector) == 100
+        self.assertEqual(len(self.testvector), 100)
 
-        raws = [k for (k,v) in self.testvector]
+        raws = [k for (k, v) in self.testvector]
 
         #raw ips
         self.prefix_preserving_static(raws)
         #encrypted ips
-        self.prefix_preserving_static([v for (k,v) in self.testvector])
+        self.prefix_preserving_static([v for (k, v) in self.testvector])
 
         # initialize prefix_preserving_dynamic
         # randomly select several subnet checks, at least 100 must be positive
         pp_dynamic_testvector = []
-        while len([r for (_,_,_,r) in pp_dynamic_testvector if r]) < 100 and len(pp_dynamic_testvector) <= 1000:
+        while len([r for (_, _, _, r) in pp_dynamic_testvector if r]) < 100 and len(pp_dynamic_testvector) <= 1000:
             ip_index = random.randint(0, len(self.testvector) - 1)
             network_index = random.randint(0, len(self.testvector) - 1)
             prefix_len = random.randint(0, 32)
@@ -112,7 +112,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         #raw ips
         self.prefix_preserving_dynamic(raws)
         #encrypted ips
-        self.prefix_preserving_dynamic([v for (k,v) in self.testvector])
+        self.prefix_preserving_dynamic([v for (k, v) in self.testvector])
 
     def test_sample_trace(self):
         cp = CryptoPAn(bytes(self.key))
@@ -141,7 +141,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         for (raw, _) in self.testvector:
             raw_ip6 = to_ip6(raw)
             # the verbose ipv6 string is 39 chars long
-            assert len(raw_ip6) == 39
+            self.assertEqual(len(raw_ip6), 39)
             cp_ip6 = cp.anonymize(raw_ip6)
             raws.append(raw_ip6)
             anons.append(cp_ip6)
@@ -188,7 +188,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         for (raw, _) in self.testvector:
             raw_ip6 = to_ip6(raw)
             # the verbose ipv6 string is 39 chars long
-            assert len(raw_ip6) == 39
+            self.assertEqual(len(raw_ip6), 39)
             cp_ip6 = cp.anonymize(raw_ip6)
             raws.append(raw_ip6)
             anons.append(cp_ip6)
@@ -208,18 +208,15 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         for i in range(96):
             prefix = (random.randint(0, (2**(96-i)) - 1)) << (32+i)
 
-            def to_ip6(ip):
-                ip = int(mk_ip_address(ip, version=4))
-                ip = mk_ip_address(prefix + (ip<<i) + random.randint(0, (2**i) - 1), version=6)
-                return format_ip_verbose(ip)
-
             raws = []
             anons = []
 
             for (raw, _) in self.testvector:
-                raw_ip6 = to_ip6(raw)
+                #to IPv6 by shifting to the left and filling with garbage on the right
+                raw_ip6 = mk_ip_address(prefix + (int(mk_ip_address(raw, version=4))<<i) + random.randint(0, (2**i) - 1), version=6)
+                raw_ip6 = format_ip_verbose(raw_ip6)
                 # the verbose ipv6 string is 39 chars long
-                assert len(raw_ip6) == 39
+                self.assertEqual(len(raw_ip6), 39)
                 cp_ip6 = cp.anonymize(raw_ip6)
                 raws.append(raw_ip6)
                 anons.append(cp_ip6)
@@ -228,6 +225,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
             self.prefix_preserving(anons, prefix_offset=96-i)
 
 
+class Statistical(unittest.TestCase):
     def test_ipv6_hamming(self):
         """The hamming distance between entcrypted IPv6 addresses which
         do not share a common prefix is huge. Where huge means roughly
@@ -251,7 +249,7 @@ class ReferenceImplementationIPv4(unittest.TestCase):
         """
 
         #random key!
-        cp = CryptoPAn(bytes([random.randint(0,255) for _ in self.key]))
+        cp = CryptoPAn(bytes([random.randint(0, 255) for _ in range(32)]))
 
         print("This test may _sometimes_ fail.")
 
@@ -311,11 +309,12 @@ class ReferenceImplementationIPv4(unittest.TestCase):
 
 @unittest.skipUnless(sys.version_info > (3, 4), "Examples require at least python 3")
 class Examples(unittest.TestCase):
+    """Run the example code with a key where we know that we get plausible results"""
     def test_anonymize_all_the_things(self):
         example_prog = "./anonymize_all_the_things.py"
         key = '8009ab3a605435bea0c385bea18485d8b0a1103d6590bdf48c968be5de53836e'
-        self.assertTrue(os.path.isfile(example_prog) )
-        ret = subprocess.run([sys.executable, example_prog, 'testdata/nasty.txt', key], stdout=subprocess.PIPE)
+        self.assertTrue(os.path.isfile(example_prog))
+        ret = subprocess.run([sys.executable, example_prog, 'testdata/nasty.txt', key], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.assertEqual(ret.returncode, 0)
         expected = b"""foobar 117.8.135.123
 v6foobar 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79 foo 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79 foooshorter 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79 even shorter 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79
