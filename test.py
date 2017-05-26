@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function, unicode_literals
+import sys, os
 import unittest
 import random
+import subprocess
 from yacryptopan import CryptoPAn
-import sys
 if sys.version_info < (3, 3):
     # python 2 compatibility
     import netaddr
@@ -306,5 +307,35 @@ class ReferenceImplementationIPv4(unittest.TestCase):
 
     # further test TODO
     # test all tests which only do prefix_preserving with random key again
+
+
+@unittest.skipUnless(sys.version_info > (3, 4), "Examples require at least python 3")
+class Examples(unittest.TestCase):
+    def test_anonymize_all_the_things(self):
+        example_prog = "./anonymize_all_the_things.py"
+        key = '8009ab3a605435bea0c385bea18485d8b0a1103d6590bdf48c968be5de53836e'
+        self.assertTrue(os.path.isfile(example_prog) )
+        ret = subprocess.run([sys.executable, example_prog, 'testdata/nasty.txt', key], stdout=subprocess.PIPE)
+        self.assertEqual(ret.returncode, 0)
+        expected = b"""foobar 117.8.135.123
+v6foobar 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79 foo 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79 foooshorter 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79 even shorter 1f18:bc7b:945c:69f8:241f:9dd1:fb4e:ff79
+ipv6 url http://[1f18:bc7b:945c:669b:2e19:9a2e:377:6486]:8080/
+-A FORWARD -d 162.112.255.43/19 -s 162.112.255.43/19 -j ACCEPT
+-A OUTPUT -d 55.21.62.136 -j ACCEPT
+-A INPUT -s 240.232.0.156/32 -m iprange ! --src-range 56.131.176.115-240.15.248.0
+special purpose v4: 127.0.4.5 192.168.141.101 10.92.194.88
+special v6: :: ::1 ::
+do not anonymize mac addresses
+ HWaddr XX:XX:XX:XX:XX:XX XX:XX:XX:XX:XX:XX  foo
+ HWaddr with line ending XX:XX:XX:XX:XX:XX
+IPv6 address which looks almost like a MAC: 1f18:b37b:1cc3:8118:41f:9fd1:f875:fab8
+ipv4 embedded ipv6 3883:b073:ff0f:fff8:203f:7c8:617:fd01
+a line with no IP addresses
+f33c:8ca3:ef0f:e019:e7ff:f1e3:f91f:f800/7 f33c:8ca3:ef0f:e019:e7ff:f1e3:f91f:f800
+1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff 1f18:bc7b:e01:891e:401:3:f8fb:44ff
+"""
+        self.assertEqual(ret.stdout, expected)
+
+
 if __name__ == '__main__':
     unittest.main()

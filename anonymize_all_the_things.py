@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+
+"""
+Example File
+Reads a text file with IP addresses and write an anomymized version to std out.
+Loopback addresses are not anomymized.
+Only the host part of private addresses gets randomized.
+Censors MAC addresses, does not care whether IPv6 addresses have MAC addresses embedded.
+"""
+
 import re
 import sys
 from binascii import hexlify, unhexlify
@@ -7,7 +16,7 @@ from Crypto import Random #CSPSRNG
 from ipaddresscrypto import IPAddressCrypt
 
 # insert hard-coded key here, keep it None to get a fresh one
-# key = unhexlify('d70ae6667960559165d275c487624045eb8cc5c86ce20906dcc0521b7716089d')
+#KEY = unhexlify('346e20bc303b6b60cf3605c94257bfd5833bfbf302d0cd3bc6dd601221e4deb4')
 KEY = None
 
 def print_std_err(str_):
@@ -53,22 +62,22 @@ fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|     # fe80::7:8%eth0   fe80::7:8%
     if KEY is None:
         print_std_err("generating new random key.")
         KEY = Random.new().read(32)
-        print_std_err("using key `{}'.".format(hexlify(KEY)))
-        print_std_err("save the key and hard-code it in this file to get reproducible results.")
+    print_std_err("using key `{}'.".format(hexlify(KEY).decode('ASCII')))
+    print_std_err("save the key and hard-code it in this file to get reproducible results.")
 
-    cp = IPAddressCrypt(KEY, preserve_prefix=SPECIAL_PURPOSE)
+    cp = IPAddressCrypt(KEY, preserve_prefix=SPECIAL_PURPOSE, debug=False)
 
     print_std_err("opening {}".format(filename))
     with open(filename, 'r') as fp:
         for line in fp:
             for m in ipv6.finditer(line):
                 ip = m.group(0)
-                ip_anonymized = cp.anonymize(ip)
+                ip_anonymized = str(cp.anonymize(ip))
                 line = line.replace(ip, ip_anonymized, 1)
 
             for m in ipv4.finditer(line):
                 ip = m.group(0)
-                ip_anonymized = cp.anonymize(ip)
+                ip_anonymized = str(cp.anonymize(ip))
                 line = line.replace(ip, ip_anonymized, 1)
 
             for m in mac_address.finditer(line):
@@ -80,8 +89,15 @@ fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|     # fe80::7:8%eth0   fe80::7:8%
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print_std_err("Usage: {} input_file_name > anonymized_output".format(sys.argv[0]))
+    if not(2 <= len(sys.argv) <= 3):
+        print_std_err("Usage: {} input_file_name [optional key] > anonymized_output".format(sys.argv[0]))
     else:
+        if len(sys.argv) == 3:
+            print_std_err("Got a key as parameter")
+            assert KEY is None
+            key = sys.argv[2]
+            assert len(key) == 64, "hexlified encoded key of 32 bytes (expeced 64 chars, got {})".format(len(key))
+            KEY = unhexlify(key)
+            assert len(KEY) == 32 and type(KEY) is bytes
         main(sys.argv[1])
 
