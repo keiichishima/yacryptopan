@@ -44,16 +44,16 @@ class CryptoPAn(object):
         """Initialize a CryptoPAn() instance.
 
         Args:
-            key: a 32 bytes string used for AES key and padding when
+            key: a 32 bytes object used for AES key and padding when
                  performing a block cipher operation. The first 16 bytes
                  are used for the AES key, and the latter for padding.
+
+        Changelog: A bytes object (not string) is required for python3.
         """
         assert(len(key) == 32)
-        if sys.version_info.major == 3:
-            # XXX what is this?
-            # XXX encode the key string to a byte array.
-            # XXX key = key.encode('utf-8')
-            # XXX incompatibility to previous version!!
+        if sys.version_info.major < 3:
+            assert type(key) is str
+        else:
             assert type(key) is bytes
         self._cipher = AES.new(key[:16], AES.MODE_ECB)
         self._padding = array('B')

@@ -4,7 +4,8 @@ ipv6 url http://[2001:0db8:85a3:08d3:1319:8a2e:0370:7344]:8080/
 -A FORWARD -d 131.159.1.42/19 -s 131.159.1.42/19 -j ACCEPT
 -A OUTPUT -d 8.8.8.8 -j ACCEPT
 -A INPUT -s 255.8.1.100/32 -m iprange ! --src-range 0.0.0.0-255.255.255.255
-special purpose v4: 127.0.4.5
+special purpose v4: 127.0.4.5 192.168.42.42 10.0.0.0
+special v6: :: ::1 0:0::0
 do not anonymize mac addresses
  HWaddr ab:ab:ab:ab:ab:ab FF:FF:FF:FF:FF:FF  foo
  HWaddr with line ending ab:ab:ab:ab:ab:ab

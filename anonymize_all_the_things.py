@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-from ipaddresscrypto import IPAddressCrypt, printStdErr
+from ipaddresscrypto import IPAddressCrypt, print_std_err
 from Crypto import Random #CSPSRNG
 from binascii import hexlify, unhexlify
 import re, sys
 
-printStdErr("generating new random key.")
+print_std_err("generating new random key.")
 key = Random.new().read(32)
 # insert hard-coded key here
 #key = unhexlify('d70ae6667960559165d275c487624045eb8cc5c86ce20906dcc0521b7716089d')
-printStdErr("using key `%s'." % hexlify(key))
-printStdErr("save the key and hard-code it in this file to get reproducible results.")
+print_std_err("using key `%s'." % hexlify(key))
+print_std_err("save the key and hard-code it in this file to get reproducible results.")
 
 
 #this key triggers errors in my test data (mapping sth to special-purpose ranges):
@@ -19,7 +19,7 @@ printStdErr("save the key and hard-code it in this file to get reproducible resu
 cp = IPAddressCrypt(key)
 
 def main(filename):
-    printStdErr("opening %s" % filename)
+    print_std_err("opening %s" % filename)
 
     #http://stackoverflow.com/questions/53497/regular-expression-that-matches-valid-ipv6-addresses
     ipv4 = re.compile(r"""(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)""")
@@ -55,17 +55,17 @@ fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|     # fe80::7:8%eth0   fe80::7:8%
                 ip = m.group(0)
                 ip_anonymized = cp.anonymize(ip)
                 line = line.replace(ip, ip_anonymized, 1)
-                
+
             for m in mac_address.finditer(line):
                 mac = m.group(1) #does not include surrounding spaces
                 mac_anonymized = "XX:XX:XX:XX:XX:XX"
                 line = line.replace(mac, mac_anonymized, 1)
-                
+
             print(line.rstrip('\n'),)
 
 
 if len(sys.argv) != 2:
-    printStdErr("Usage: %s input_file_name > anonymized_output" % sys.argv[0])
+    print_std_err("Usage: %s input_file_name > anonymized_output" % sys.argv[0])
 else:
     main(sys.argv[1])
 
