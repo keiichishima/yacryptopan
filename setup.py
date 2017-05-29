@@ -17,7 +17,7 @@ if sys.version_info < (3, 3):
     install_requires.extend(['netaddr>=0.7.15'])
 
 setup(name='yacryptopan',
-      version='0.0.4',
+      version='0.0.5',
       description='Yet another Crypto-PAn implementation for Python',
       long_description=read_md('README.md'),
       author='Keiichi SHIMA',
