@@ -158,5 +158,5 @@ if __name__ == '__main__':
     cp = CryptoPAn(''.join([chr(x) for x in range(0, 32)]))
     # should print 2.90.93.17
     print (cp.anonymize('192.0.2.1'))
-    # should pring dd92:2c44:3fc0:ff1e:7ff9:c7f0:8180:7e00
+    # should print dd92:2c44:3fc0:ff1e:7ff9:c7f0:8180:7e00
     print (cp.anonymize('2001:db8::1'))
