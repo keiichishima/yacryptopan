@@ -1,0 +1,16 @@
+foobar 123.123.123.123
+v6foobar 2a02:0db8:85a3:0000:0000:8a2e:0370:7344 foo 2a02:0db8:85a3:0000:0000:8a2e:0370:7344 foooshorter 2a02:db8:85a3:0:0:8a2e:370:7344 even shorter 2a02:db8:85a3::8a2e:370:7344
+ipv6 url http://[2a02:0db8:85a3:08d3:1319:8a2e:0370:7344]:8080/
+-A FORWARD -d 131.159.1.42/19 -s 131.159.1.42/19 -j ACCEPT
+-A OUTPUT -d 8.8.8.8 -j ACCEPT
+-A INPUT -s 255.8.1.100/32 -m iprange ! --src-range 0.0.0.0-255.255.255.255
+special purpose v4: 127.0.4.5 192.168.42.42 10.0.0.0
+special v6: :: ::1 0:0::0
+do not anonymize mac addresses
+ HWaddr ab:ab:ab:ab:ab:ab FF:FF:FF:FF:FF:FF  foo
+ HWaddr with line ending ab:ab:ab:ab:ab:ab
+IPv6 address which looks almost like a MAC: 2001:b8:a3:00:00:2e:70:44
+ipv4 embedded ipv6 ::ffff:192.0.2.128
+a line with no IP addresses
+fc00::/7 fc00::
+2001:db8:0:0:1:0:0:1 2001:0db8:0:0:1:0:0:1 2001:db8::1:0:0:1 2001:db8::0:1:0:0:1 2001:0db8::1:0:0:1 2001:db8:0:0:1::1 2001:db8:0000:0:1::1 2001:DB8:0:0:1::1

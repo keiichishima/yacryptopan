@@ -1,26 +1,42 @@
-#!/usr/bin/env python
-from __future__ import absolute_import, division, print_function, unicode_literals
-from ipaddresscrypto import IPAddressCrypt, printStdErr
-from Crypto import Random #CSPSRNG
+#!/usr/bin/env python3
+
+"""
+Example File.
+Reads a text file with IP addresses and write an anomymized version to std out.
+Loopback addresses are not anomymized.
+Only the host part of some special purpose ranges gets anonymized.
+Censors MAC addresses, does not care whether IPv6 addresses have MAC addresses embedded.
+"""
+
+import re
+import sys
 from binascii import hexlify, unhexlify
-import re, sys
+from ipaddress import ip_network, ip_address
+from Crypto import Random #CSPSRNG
+from ipaddresscrypto import IPAddressCrypt
 
-printStdErr("generating new random key.")
-key = Random.new().read(32)
-# insert hard-coded key here
-#key = unhexlify('d70ae6667960559165d275c487624045eb8cc5c86ce20906dcc0521b7716089d')
-printStdErr("using key `%s'." % hexlify(key))
-printStdErr("save the key and hard-code it in this file to get reproducible results.")
+# insert hard-coded key here, keep it None to get a fresh one
+#KEY = unhexlify('346e20bc303b6b60cf3605c94257bfd5833bfbf302d0cd3bc6dd601221e4deb4')
+KEY = None
+
+def print_std_err(str_):
+    """Print all errors and debug output to stderr.
+    So stdout output is the anonymized file."""
+    print(str_, file=sys.stderr)
 
 
-#this key triggers errors in my test data (mapping sth to special-purpose ranges):
-# 2001b69af7e2751288b44eeb5871f175530e58f29e2f02b113f9570174816746
-
-
-cp = IPAddressCrypt(key)
+# Example: sompe special purpose ranges
+SPECIAL_PURPOSE = [ip_network("10.0.0.0/8"),
+                   ip_network("172.16.0.0/12"),
+                   ip_network("192.0.0.0/24"),
+                   ip_network("192.0.2.0/24"),
+                   ip_network("192.168.0.0/16"),
+                   ip_network("224.0.0.0/4"),
+                   ip_network("2001:db8::/32") #IPv6 Address Prefix Reserved for Documentation
+                   ]
 
 def main(filename):
-    printStdErr("opening %s" % filename)
+    global KEY
 
     #http://stackoverflow.com/questions/53497/regular-expression-that-matches-valid-ipv6-addresses
     ipv4 = re.compile(r"""(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)""")
@@ -42,24 +58,48 @@ fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|     # fe80::7:8%eth0   fe80::7:8%
 ([0-9a-fA-F]{1,4}:){1,7}:|                         # 1::                              1:2:3:4:5:6:7::
 :((:[0-9a-fA-F]{1,4}){1,7}|:)                     # ::2:3:4:5:6:7:8  ::2:3:4:5:6:7:8 ::8       ::     
 )""", re.X)
+    mac_address = re.compile(r"""\s((?:[0-9a-fA-F]{2}:?){6})(?=\s)""") #enclosed in spaces, last space not consumed
 
 
+    if KEY is None:
+        print_std_err("generating new random key.")
+        KEY = Random.new().read(32)
+    print_std_err("using key `{}'.".format(hexlify(KEY).decode('ASCII')))
+    print_std_err("save the key and hard-code it in this file to get reproducible results.")
+
+    cp = IPAddressCrypt(KEY, preserve_prefix=SPECIAL_PURPOSE, debug=False)
+
+    print_std_err("opening {}".format(filename))
     with open(filename, 'r') as fp:
         for line in fp:
             for m in ipv6.finditer(line):
                 ip = m.group(0)
-                ip_anonymized = cp.anonymize(ip)
+                ip_anonymized = str(cp.anonymize(ip))
                 line = line.replace(ip, ip_anonymized, 1)
 
             for m in ipv4.finditer(line):
                 ip = m.group(0)
-                ip_anonymized = cp.anonymize(ip)
+                ip_anonymized = str(cp.anonymize(ip))
                 line = line.replace(ip, ip_anonymized, 1)
+
+            for m in mac_address.finditer(line):
+                mac = m.group(1) #does not include surrounding spaces
+                mac_anonymized = "XX:XX:XX:XX:XX:XX"
+                line = line.replace(mac, mac_anonymized, 1)
+
             print(line.rstrip('\n'),)
 
 
-if len(sys.argv) != 2:
-    printStdErr("Usage: %s input_file_name > anonymized_output" % sys.argv[0])
-else:
-    main(sys.argv[1])
+if __name__ == "__main__":
+    if not(2 <= len(sys.argv) <= 3):
+        print_std_err("Usage: {} input_file_name [optional key] > anonymized_output".format(sys.argv[0]))
+    else:
+        if len(sys.argv) == 3:
+            print_std_err("Got a key as parameter")
+            assert KEY is None
+            key = sys.argv[2]
+            assert len(key) == 64, "hexlified encoded key of 32 bytes (expeced 64 chars, got {})".format(len(key))
+            KEY = unhexlify(key)
+            assert len(KEY) == 32 and type(KEY) is bytes
+        main(sys.argv[1])
 

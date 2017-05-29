@@ -1,51 +1,95 @@
-#!/usr/bin/env python
-from __future__ import absolute_import, division, print_function, unicode_literals
+#!/usr/bin/env python3
+"""
+Example File.
+A wrapper around CryptoPAn with some (probably unsound) features. It anonymizes
+IP addresses, but there is an option not to anonymize certain IP addresses
+or to preserve the prefix for certain ranges.
+
+The module fails if an anonymized IP accidentally maps into one of these special ranges.
+"""
 import sys
-import netaddr
+from ipaddress import ip_network, ip_address
 from yacryptopan import CryptoPAn
-import netaddr
-
-def printStdErr(*objs):
-    print(*objs, file=sys.stderr)
 
 
-special_purpose_ipv4 = [netaddr.IPNetwork("10.0.0.0/8"),
-                        netaddr.IPNetwork("127.0.0.0/8"),
-                        netaddr.IPNetwork("172.16.0.0/12"),
-                        netaddr.IPNetwork("192.0.0.0/24"),
-                        netaddr.IPNetwork("192.0.2.0/24"),
-                        netaddr.IPNetwork("192.168.0.0/16"),
-                        netaddr.IPNetwork("224.0.0.0/4")]
+def _overwrite_prefix(ip, net):
+    """Replace the network prefix of an ip address.
 
-#TODO inherit CryptoPAn?
+    Example: _overwrite_prefix(40.41.42.43, 10.1.0.0/16) = 10.1.42.43
+    """
+    host_part = int(ip) & int(net.hostmask)
+    # add the prefix of the net
+    return ip_address(int(net.network_address) | host_part)
+
+assert _overwrite_prefix(ip_address('40.41.42.43'), ip_network('10.1.0.0/16')) ==\
+        ip_address('10.1.42.43')
+
+
+def _no_anonymize(ip, debug):
+    res = ip.is_loopback or (ip.version == 6 and ip == ip_address('::'))
+    if debug and res:
+        print("not anonymizing {}".format(ip), file=sys.stderr)
+    return res
+
+
 class IPAddressCrypt(object):
     """Anonymize IP addresses keepting prefix consitency.
     Mapping special purpose ranges to special purpose ranges
     """
-    def __init__(self, key):
+    def __init__(self, key, no_anonymize=_no_anonymize,
+                 preserve_prefix=None, debug=False):
+        """
+        Args:
+            key (bytes): 32 bytes key to be passed to CryptoPAn.
+            no_anonymize (function): IPAddress, Bool -> bool
+                return true if address should not be anonymized at all.
+            preserve_prefix (list<ipaddress.ip_network>): List of network
+                prefixes where only the host part should be anonymized.
+        """
         self.cp = CryptoPAn(key)
-
-    def is_special_purpose_ipv4(self, ip):
-        for net in special_purpose_ipv4:
-            if ip in net:
-                return True
-        return False
-
-    def do_not_anonymize(self, ip):
-        ip = netaddr.IPAddress(ip)
-        if ip.version == 4:
-            return self.is_special_purpose_ipv4(ip)
+        self._no_anonymize = no_anonymize
+        self.debug = debug
+        if preserve_prefix is None:
+            self._preserve_prefix = []
         else:
-            return False #IPv6 addresses can have MACs embedded
-            #be super conservative and anonymize them all
+            self._preserve_prefix = preserve_prefix
+
+    def get_preserve_prefix_net(self, ip):
+        # check for ip versions necessary?
+        preserve = [net for net in self._preserve_prefix if net.version == ip.version]
+        for net in preserve:
+            if ip in net:
+                return net
+        return None
+
+    def is_preserve_prefix(self, ip):
+        return self.get_preserve_prefix_net(ip) is not None
+
 
     def anonymize(self, ip):
-        if self.do_not_anonymize(ip):
-            #TODO anonymize but completely keep the prefix (i.e. only anonymize the least significant bits)
+        """Anonymize ip address"""
+        ip = ip_address(ip)
+        if self._no_anonymize(ip, self.debug):
             return ip
+        elif self.is_preserve_prefix(ip):
+            net = self.get_preserve_prefix_net(ip)
+            ip_anonymized = ip_address(self.cp.anonymize(ip))
+            return _overwrite_prefix(ip_anonymized, net)
         else:
-            ip_anonymized = self.cp.anonymize(ip)
-            if self.do_not_anonymize(ip_anonymized):
-                #TODO: anonymize again until we are in a `good` range?
-                printStdErr("WARNING: anonymized ip address mapped to special-purpose address range. Please consider re-running with different key")
+            ip_anonymized = ip_address(self.cp.anonymize(ip))
+            # Fail if anonymized IP is accidentally mapped to some special IP
+            if self._no_anonymize(ip_anonymized, debug=False):
+                print("INFO: anonymized ip {} mapped to a special ip which should "
+                      "not be anonymized ({}). Please re-run with a different key"
+                      .format(ip, ip_anonymized),
+                      file=sys.stderr)
+                sys.exit(1)
+            if self.is_preserve_prefix(ip_anonymized):
+                print("INFO: anonymized ip {} mapped to special "
+                      "address range ({} in {}). "
+                      "Please re-run with a different key"
+                      .format(ip, ip_anonymized, self.get_preserve_prefix_net(ip_anonymized)),
+                      file=sys.stderr)
+                sys.exit(1)
             return ip_anonymized
+
