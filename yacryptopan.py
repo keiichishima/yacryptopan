@@ -31,11 +31,18 @@ from Crypto.Cipher import AES
 from functools import reduce
 import sys
 if sys.version_info < (3, 3):
-    from netaddr import IPNetwork
+    import netaddr
 else:
     import ipaddress
 
 _logger = logging.getLogger(__name__)
+
+class AddressValueError(ValueError):
+    """Exception class raised when the IP address parser (the netaddr
+    module in Python < 3.3 or ipaddress module) failed.
+
+    """
+    pass
 
 class CryptoPAn(object):
     """Anonymize IP addresses keepting prefix consitency.
@@ -101,11 +108,17 @@ class CryptoPAn(object):
         aaddr = None
         if sys.version_info < (3, 3):
             # for Python before 3.3
-            ip = IPNetwork(addr)
+            try:
+                ip = netaddr.IPNetwork(addr)
+            except netaddr.AddrFormatError:
+                raise AddressValueError
             aaddr = self.anonymize_bin(ip.value, ip.version)
         else:
             # for newer Python3 (and later?)
-            ip = ipaddress.ip_address(addr)
+            try:
+                ip = ipaddress.ip_address(addr)
+            except (ValueError, ipaddress.AddressValueError) as e:
+                raise AddressValueError
             aaddr = self.anonymize_bin(int(ip), ip.version)
         if ip.version == 4:
             return '%d.%d.%d.%d' % (aaddr>>24, (aaddr>>16) & 0xff,
