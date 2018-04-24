@@ -44,6 +44,7 @@ Paris, 2002.
 
 - Cornelius Diekmann, https://github.com/diekmann
 - Matteo Pergolesi, https://github.com/TheWall89
+- AaronK, https://github.com/aaronkaplan
 
 ## Author
 
