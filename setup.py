@@ -17,7 +17,7 @@ if sys.version_info < (3, 3):
     install_requires.extend(['netaddr>=0.7.15'])
 
 setup(name='yacryptopan',
-      version='1.0.0',
+      version='1.0.1',
       description='Yet another Crypto-PAn implementation for Python',
       long_description=read_md('README.md'),
       author='Keiichi SHIMA',
@@ -30,7 +30,7 @@ setup(name='yacryptopan',
           'Intended Audience :: Information Technology',
           'Intended Audience :: Science/Research',
           'License :: OSI Approved :: BSD License',
-          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.8',
           'Topic :: Scientific/Engineering :: Information Analysis',
           'Topic :: Security :: Cryptography',
           'Topic :: Software Development :: Libraries :: Python Modules'],

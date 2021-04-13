@@ -28,6 +28,8 @@ This package supports both IPv4 and IPv6 anonymization.
 
 The source code is available at https://github.com/keiichishima/yacryptopan
 
+This module works with Python3.
+
 ## Bug Reports
 
 Please submit bug reports or patches through the GitHub interface.
