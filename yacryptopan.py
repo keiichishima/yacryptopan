@@ -168,7 +168,7 @@ class CryptoPAn(object):
 
 if __name__ == '__main__':
     # do the same test as the pycryptopan does.
-    cp = CryptoPAn(''.join([chr(x) for x in range(0, 32)]))
+    cp = CryptoPAn(''.join([chr(x) for x in range(0, 32)]).encode())
     # should print 2.90.93.17
     print (cp.anonymize('192.0.2.1'))
     # should print dd92:2c44:3fc0:ff1e:7ff9:c7f0:8180:7e00
