@@ -14,7 +14,7 @@ This package supports both IPv4 and IPv6 anonymization.
 ## Usage
 
     >>> from yacryptopan import CryptoPAn
-    >>> cp = CryptoPAn('32-char-str-for-AES-key-and-pad.')
+    >>> cp = CryptoPAn(b'32-char-str-for-AES-key-and-pad.')
     >>> cp.anonymize('192.0.2.1')
     '192.0.125.244'
     >>> cp.anonymize_bin(0xc0000201, version=4)
