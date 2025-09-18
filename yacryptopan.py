@@ -27,7 +27,7 @@ from __future__ import print_function
 import logging
 
 from array import array
-from Crypto.Cipher import AES
+from Cryptodome.Cipher import AES
 from functools import reduce
 import sys
 if sys.version_info < (3, 3):
